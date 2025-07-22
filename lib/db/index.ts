@@ -8,7 +8,7 @@ import { usersColumns } from './schema/tenant';
 import { env } from '../../env.mjs';
 
 // Single shared pool for the entire database (all schemas)
-const sharedPool = new Pool({ connectionString: env.POSTGRES_URL });
+const sharedPool = new Pool({ connectionString: env.DATABASE_URL });
 export const sharedDb = drizzle(sharedPool);
 
 // Function to get tenant-specific DB (dynamic schema qualification, same pool)
@@ -31,7 +31,7 @@ export async function getTenantDb(tenantId: string) {
 
 // For raw queries (e.g., schema creation)
 export async function executeRawQuery(query: string) {
-  const client = new Client({ connectionString: env.POSTGRES_URL });
+  const client = new Client({ connectionString: env.DATABASE_URL });
   await client.connect();
   try {
     await client.query(query);
