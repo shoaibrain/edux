@@ -13,12 +13,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = TenantSignupDto.parse(body);
-    const tenantId = data.tenantId;  // Use provided tenantId (no randomization)
+    const tenantId = data.tenantId; 
     const schemaName = `tenant_${tenantId}`;
 
     console.log(`[API] Creating tenant: ${tenantId}, schema: ${schemaName}`);
 
-    // Check if tenant exists (enterprise-grade unique check)
     const existing = await sharedDb.select().from(tenants).where(eq(tenants.tenantId, tenantId));
     if (existing.length) {
       return NextResponse.json({ error: 'Tenant ID already exists' }, { status: 409 });

@@ -19,9 +19,6 @@ export default async function DashboardPage() {
   try {
     decoded = verify(token, env.JWT_SECRET) as { tenantId: string; userId: number };
 
-    // Validate tenant
-    // await validateTenant(decoded.tenantId);
-
     const { db: tenantDb, schema } = await getTenantDb(decoded.tenantId);
     const user = await tenantDb.select().from(schema.users).where(eq(schema.users.id, decoded.userId)).limit(1);
 

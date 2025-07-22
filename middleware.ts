@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  console.log(`[Middleware] Tenant ID found: ${tenantId}`);
   if (!tenantId) {
     console.error('[Middleware] No tenant ID found');
     return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
@@ -22,9 +23,8 @@ export async function middleware(request: NextRequest) {
   // Set tenant context in headers (no validation here)
   const headers = new Headers(request.headers);
   headers.set('x-tenant-id', tenantId);
-
-  // Optional: Auth check (JWT verify can stay if jsonwebtoken polyfilled, but move DB to routes)
-  // ... your existing auth logic, but skip DB-dependent parts ...
+  console.log(`[Middleware] Setting x-tenant-id header: ${tenantId}`);
+  console.log(`[Middleware] headers: ${JSON.stringify(Array.from(headers.entries()))}`);
 
   return NextResponse.next({ request: { headers } });
 }
