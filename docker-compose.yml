@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: eduspace-postgres
+    environment:
+      - POSTGRES_USER=eduspace_user
+      - POSTGRES_PASSWORD=strong_password
+      - POSTGRES_DB=eduspace_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
