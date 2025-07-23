@@ -1,7 +1,6 @@
 // In /app/api/tenants/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { TenantSignupDto } from '@/lib/dto/tenant';
 import { createNeonProject } from '@/lib/neon/api';
@@ -11,6 +10,7 @@ import * as tenantSchema from '@/lib/db/schema/tenant';
 import { encrypt } from '@/lib/crypto';
 import { runTenantMigrations } from '@/lib/db/migrate';
 import log from '@/lib/logger';
+import z from 'zod';
 
 export const runtime = 'nodejs';
 
@@ -30,7 +30,7 @@ const body = await request.json();
     }
     const { projectId: _neonProjectId, connectionString } = neonProject;
     neonProjectId = _neonProjectId; // Assign to the outer scope variable for the catch block
-
+    console.log(`neonProject: ${JSON.stringify(neonProject)}`);
     // 2. Store the new tenant's metadata in your main database
     const encryptedConnectionString = encrypt(connectionString);
     await mainDb.insert(tenants).values({
@@ -58,7 +58,6 @@ const body = await request.json();
     return NextResponse.json({ message: 'Tenant created successfully', tenantId });
 
   } catch (err) {
-    // --- THIS IS THE NEW, IMPROVED CATCH BLOCK ---
     let errorDetails = {};
     if (err instanceof Error) {
         errorDetails = {
@@ -76,6 +75,7 @@ const body = await request.json();
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: err }, { status: 400 });
     }
+    console.log(`ERRROR:${JSON.stringify(err)}`)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
