@@ -1,9 +1,8 @@
-// lib/db/schema/tenant.ts
-import { serial, text } from 'drizzle-orm/pg-core';
+import { serial, text, pgTable } from 'drizzle-orm/pg-core';
 
-export const usersColumns = {
+export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  password: text('password').notNull(),  // Hashed
-};
+  password: text('password').notNull(),
+});

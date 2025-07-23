@@ -14,5 +14,10 @@ export const LoginDto = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
+export const LoginWithTenantDto = LoginDto.extend({
+  tenantId: z.string().min(1, 'Tenant ID is required'),
+});
+
 export type TenantSignupInput = z.infer<typeof TenantSignupDto>;
 export type LoginInput = z.infer<typeof LoginDto>;
+export type LoginWithTenantInput = z.infer<typeof LoginWithTenantDto>;

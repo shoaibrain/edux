@@ -1,12 +1,11 @@
-// drizzle.config.ts
 import { defineConfig } from 'drizzle-kit';
-import { env } from './env.mjs';  // For validated env
+import { env } from './env.mjs';
 
 export default defineConfig({
-  schema: './lib/db/schema/shared.ts',  // Only shared; tenants dynamic
-  out: './drizzle/migrations',
+  schema: './lib/db/schema/shared.ts',
+  out: './drizzle/main-migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: env.DATABASE_URL,
+    url: env.POSTGRES_URL,
   },
 });

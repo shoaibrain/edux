@@ -1,37 +1,54 @@
-// app/dashboard/page.tsx
 import { cookies } from 'next/headers';
 import { verify } from 'jsonwebtoken';
 import { getTenantDb } from '@/lib/db';
-
+import * as tenantSchema from '@/lib/db/schema/tenant';
 import { eq } from 'drizzle-orm';
 import { env } from '@/env.mjs';
+import { redirect } from 'next/navigation';
+import log from '@/lib/logger';
 
-export const runtime = 'nodejs';  // Node runtime
+export const dynamic = 'force-dynamic';
+
+interface UserSession {
+  tenantId: string;
+  userId: number;
+}
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
-  const token = (await cookieStore).get('authToken')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('authToken')?.value;
+
   if (!token) {
-    return <div>Unauthorized</div>;
+    log.warn(' No auth token found, redirecting to login.');
+    redirect('/login');
   }
 
-  let decoded;
   try {
-    decoded = verify(token, env.JWT_SECRET) as { tenantId: string; userId: number };
+    const decoded = verify(token, env.JWT_SECRET) as UserSession;
+    log.info({ session: decoded }, ' User session decoded.');
 
-    const { db: tenantDb, schema } = await getTenantDb(decoded.tenantId);
-    const user = await tenantDb.select().from(schema.users).where(eq(schema.users.id, decoded.userId)).limit(1);
+    const tenantDb = await getTenantDb(decoded.tenantId);
+    const userResult = await tenantDb.query.users.findFirst({
+      where: eq(tenantSchema.users.id, decoded.userId),
+    });
+
+    if (!userResult) {
+      log.error({ session: decoded }, ' User not found in tenant DB.');
+      cookieStore.delete('authToken');
+      redirect('/login');
+    }
 
     return (
-      <div className="min-h-screen p-8 bg-gray-100">
-        <h1 className="text-3xl">Welcome to {decoded.tenantId} Dashboard</h1>
-        <p>Email: {user[0]?.email}</p>
+      <div className="min-h-screen p-8 bg-gray-100 text-gray-900">
+        <h1 className="text-4xl font-bold">Welcome to Tenant: <span className="text-blue-600">{decoded.tenantId}</span> Dashboard</h1>
+        <p className="text-xl mt-4">Logged in as: {userResult.name}</p>
+        <p className="text-xl mt-4">User email in as: {userResult.email}</p>
+        
       </div>
     );
   } catch (err) {
-    if (err === 'Tenant not found') {
-      return <div>Tenant not found</div>;
-    }
-    return <div>Invalid token</div>;
+    log.error({ error: err }, ' Authorization failed.');
+    cookieStore.delete('authToken');
+    redirect('/login');
   }
 }

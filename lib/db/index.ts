@@ -1,45 +1,50 @@
 // lib/db/index.ts
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool, Client } from 'pg';
-import { pgSchema } from 'drizzle-orm/pg-core';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
 import { tenants } from './schema/shared';
-import { usersColumns } from './schema/tenant';
-import { env } from '../../env.mjs';
+import * as tenantSchema from './schema/tenant';
+import { env } from '@/env.mjs';
+import { decrypt } from '@/lib/crypto';
+import log from '@/lib/logger';
 
-// Single shared pool for the entire database (all schemas)
-const sharedPool = new Pool({ connectionString: env.DATABASE_URL });
-export const sharedDb = drizzle(sharedPool);
+// 1. Main DB Client (for managing tenant metadata)
+const mainPool = new Pool({ connectionString: env.POSTGRES_URL });
+export const mainDb = drizzle(mainPool, { schema: { tenants } });
 
-// Function to get tenant-specific DB (dynamic schema qualification, same pool)
-export async function getTenantDb(tenantId: string) {
-  console.log(`[DB] Resolving tenant DB for ${tenantId}`);
-  const tenant = await sharedDb.select().from(tenants).where(eq(tenants.tenantId, tenantId)).limit(1);
-  if (!tenant.length) {
-    console.error(`[DB] Tenant not found: ${tenantId}`);
+// 2. Tenant DB Client Cache
+const tenantDbCache = new Map<string, NodePgDatabase<typeof tenantSchema>>();
+
+// 3. Function to get a tenant-specific DB client
+export async function getTenantDb(tenantId: string): Promise<NodePgDatabase<typeof tenantSchema>> {
+  if (tenantDbCache.has(tenantId)) {
+    log.info({ tenantId }, 'Tenant DB client cache HIT.');
+    return tenantDbCache.get(tenantId)!;
+  }
+  log.info({ tenantId }, 'Tenant DB client cache MISS.');
+
+  const results = await mainDb
+    .select({ connectionString: tenants.connectionString })
+    .from(tenants)
+    .where(eq(tenants.tenantId, tenantId))
+    .limit(1);
+
+  // --- Start of Fix ---
+  const tenantData = results[0]; // Access the first element of the array
+
+  if (!tenantData) {
+    log.error({ tenantId }, 'Tenant not found in main database.');
     throw new Error('Tenant not found');
   }
-  const schemaName = tenant[0].schemaName;
 
-  const tenantSchema = pgSchema(schemaName);
-  const users = tenantSchema.table('users', usersColumns);
+  const decryptedConnectionString = decrypt(tenantData.connectionString);
+  // --- End of Fix ---
 
-  const tenantDb = drizzle(sharedPool, { schema: { users } });
-  console.log(`[DB] Tenant DB initialized for schema: ${schemaName}`);
-  return { db: tenantDb, schema: { users } };
+  const tenantPool = new Pool({ connectionString: decryptedConnectionString });
+  const tenantDb = drizzle(tenantPool, { schema: tenantSchema });
+
+  tenantDbCache.set(tenantId, tenantDb);
+  log.info({ tenantId }, 'Created and cached new tenant DB client.');
+
+  return tenantDb;
 }
-
-// For raw queries (e.g., schema creation)
-export async function executeRawQuery(query: string) {
-  const client = new Client({ connectionString: env.DATABASE_URL });
-  await client.connect();
-  try {
-    await client.query(query);
-    console.log(`[DB] Executed raw query: ${query.substring(0, 50)}...`);
-  } finally {
-    await client.end();
-  }
-}
-
-// Export types
-export type TenantDb = Awaited<ReturnType<typeof getTenantDb>>;

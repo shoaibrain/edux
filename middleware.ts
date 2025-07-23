@@ -1,34 +1,73 @@
 // middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
+import logger from './lib/logger';
 
-export async function middleware(request: NextRequest) {
-  const host = request.headers.get('host') || '';
+// Extracts the tenant ID from the hostname.
+const getTenantId = (host: string): string | null => {
   const parts = host.split('.');
-  const tenantId = parts.length > 2 ? parts[0] : null;  // e.g., tenant1.localhost:3000 → tenant1
 
-  console.log(`[Middleware] Host: ${host}, Tenant ID: ${tenantId}`);
-
-  // Public routes (no tenant needed) - added '/'
-  const pathname = request.nextUrl.pathname;
-  if (!tenantId && (pathname === '/' || pathname.startsWith('/signup') || pathname.startsWith('/login') || pathname.startsWith('/api/tenants') || pathname.startsWith('/api/auth'))) {
-    return NextResponse.next();
+  // Handles tenant.localhost:3000 in development
+  if (process.env.NODE_ENV === 'development' && parts.length === 2 && parts[1].startsWith('localhost')) {
+    return parts[0];
   }
 
-  console.log(`[Middleware] Tenant ID found: ${tenantId}`);
-  if (!tenantId) {
-    console.error('[Middleware] No tenant ID found');
-    return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+  // Handles tenant.example.com in production
+  if (process.env.NODE_ENV === 'production' && parts.length > 1 && parts[0] !== 'www') {
+    return parts[0];
   }
 
-  // Set tenant context in headers (no validation here)
+  return null;
+};
+
+
+export function middleware(request: NextRequest) {
+  const host = request.headers.get('host') || '';
+  const tenantId = getTenantId(host);
+  const { pathname } = request.nextUrl;
+  const log = logger.child({ tenantId, pathname });
+
+  log.info('Middleware processing request');
+
   const headers = new Headers(request.headers);
-  headers.set('x-tenant-id', tenantId);
-  console.log(`[Middleware] Setting x-tenant-id header: ${tenantId}`);
-  console.log(`[Middleware] headers: ${JSON.stringify(Array.from(headers.entries()))}`);
+  if (tenantId) {
+    headers.set('x-tenant-id', tenantId);
+  }
+
+  // Allow public routes regardless of tenant.
+  if (pathname === '/' || pathname === '/signup') {
+    return NextResponse.next({ request: { headers } });
+  }
+
+  // If on a tenant subdomain, allow access to login.
+  if (tenantId && pathname.startsWith('/login')) {
+      return NextResponse.next({ request: { headers } });
+  }
+
+  // All API routes are allowed to pass through for now;
+  // authentication will be handled at the route level.
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next({ request: { headers } });
+  }
+
+  // For dashboard access, check for an auth token.
+  const token = request.cookies.get('authToken');
+  if (pathname.startsWith('/dashboard') && !token) {
+    log.warn('Access to dashboard denied without token, redirecting to login.');
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
 
   return NextResponse.next({ request: { headers } });
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };

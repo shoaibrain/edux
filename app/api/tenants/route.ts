@@ -1,62 +1,81 @@
-// app/api/tenants/route.ts
+// In /app/api/tenants/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
-import { sharedDb, getTenantDb, executeRawQuery } from '@/lib/db';
-import { tenants } from '@/lib/db/schema/shared';
-import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { TenantSignupDto } from '@/lib/dto/tenant';
-import z from 'zod/v4';
+import { createNeonProject } from '@/lib/neon/api';
+import { mainDb, getTenantDb } from '@/lib/db';
+import { tenants } from '@/lib/db/schema/shared';
+import * as tenantSchema from '@/lib/db/schema/tenant';
+import { encrypt } from '@/lib/crypto';
+import { runTenantMigrations } from '@/lib/db/migrate';
+import log from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
+  let neonProjectId: string | null = null;
   try {
-    const body = await request.json();
+const body = await request.json();
     const data = TenantSignupDto.parse(body);
-    const tenantId = data.tenantId; 
-    const schemaName = `tenant_${tenantId}`;
+    const { tenantId, orgName, adminName, adminEmail, adminPassword } = data;
 
-    console.log(`[API] Creating tenant: ${tenantId}, schema: ${schemaName}`);
+    log.info({ tenantId }, '[API] Tenant creation request received.');
 
-    const existing = await sharedDb.select().from(tenants).where(eq(tenants.tenantId, tenantId));
-    if (existing.length) {
-      return NextResponse.json({ error: 'Tenant ID already exists' }, { status: 409 });
+    // 1. Create the new database project on Neon
+    const neonProject = await createNeonProject(tenantId);
+    if (!neonProject || !neonProject.projectId || !neonProject.connectionString) {
+      throw new Error("Invalid response from Neon API during project creation.");
     }
+    const { projectId: _neonProjectId, connectionString } = neonProject;
+    neonProjectId = _neonProjectId; // Assign to the outer scope variable for the catch block
 
-    // Create schema and users table
-    await executeRawQuery(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
-    await executeRawQuery(`
-      CREATE TABLE IF NOT EXISTS "${schemaName}".users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
-      );
-    `);
-
-    // Insert tenant metadata
-    await sharedDb.insert(tenants).values({
+    // 2. Store the new tenant's metadata in your main database
+    const encryptedConnectionString = encrypt(connectionString);
+    await mainDb.insert(tenants).values({
       tenantId,
-      schemaName,
-      name: data.orgName,
+      name: orgName,
+      neonProjectId: _neonProjectId, // Use the non-nullable constant here
+      connectionString: encryptedConnectionString,
     });
+    log.info({ tenantId, neonProjectId }, '[API] Tenant metadata stored.');
 
-    // Insert admin user
-    const { db: tenantDb, schema } = await getTenantDb(tenantId);
-    const hashedPassword = await bcrypt.hash(data.adminPassword, 12);  // Stronger salt (12 rounds)
-    await tenantDb.insert(schema.users).values({
-      name: data.adminName,
-      email: data.adminEmail,
+    // 3. Run the migrations on the newly created tenant database
+    await runTenantMigrations(connectionString);
+
+    // 4. Create the tenant's first admin user in their new database
+    const tenantDb = await getTenantDb(tenantId);
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    await tenantDb.insert(tenantSchema.users).values({
+      name: adminName,
+      email: adminEmail,
       password: hashedPassword,
     });
+    log.info({ tenantId, adminEmail }, '[API] Admin user created in tenant DB.');
 
-    console.log(`[API] Tenant created successfully: ${tenantId}`);
-    return NextResponse.json({ message: 'Tenant created', tenantId });
+    // 5. Done!
+    return NextResponse.json({ message: 'Tenant created successfully', tenantId });
+
   } catch (err) {
-    console.error('[API] Tenant creation failed:', err);
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: err }, { status: 400 });
+    // --- THIS IS THE NEW, IMPROVED CATCH BLOCK ---
+    let errorDetails = {};
+    if (err instanceof Error) {
+        errorDetails = {
+            name: err.name,
+            message: err.message,
+            stack: err.stack,
+        };
+    } else {
+        errorDetails = { error: 'An unknown error occurred' };
     }
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    
+    log.error({ ...errorDetails, neonProjectId }, '[API] Tenant creation failed.');
+    // --- END OF NEW CATCH BLOCK ---
+
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid input', details: err }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
