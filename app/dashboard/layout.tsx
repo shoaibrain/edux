@@ -1,33 +1,24 @@
-import { Button } from "@/components/ui/button";
-import { logout } from "@/lib/actions/auth";
-import Link from "next/link";
-import { NavItem } from "./nav-item";
+import { getSession, UserSession } from "@/lib/session"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 
-
-export default function DashboardLayout({
-  children,
-}: {
+interface DashboardLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+export default async function DashboardLayout({ children }: DashboardLayoutProps) {
+  // Secures all routes under /dashboard
+  const session: UserSession = await getSession();
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-background border-b sticky top-0 z-10">
-        <div className="container mx-auto flex h-16 items-center justify-between">
-          <Link href="/dashboard" className="font-bold text-lg">EduX Dashboard</Link>
-          <div className="flex items-center gap-4">
-            <nav className="flex items-center gap-2">
-                <NavItem href="/dashboard/users">Users</NavItem>
-                <NavItem href="/dashboard/roles">Roles</NavItem>
-            </nav>
-            <form action={logout}>
-              <Button variant="outline" type="submit">Logout</Button>
-            </form>
-          </div>
+    <SidebarProvider>
+      <div className="min-h-screen w-full bg-muted/40">
+        <AppSidebar user={session} />
+        <div className="flex flex-col sm:pl-64">
+           {/* You can add a header here if needed */}
+          <main className="flex-1 p-4 sm:px-6 sm:py-6">{children}</main>
         </div>
-      </header>
-      <main className="flex-1">
-        {children}
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }
