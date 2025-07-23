@@ -1,37 +1,53 @@
-// app/dashboard/page.tsx
-import { cookies } from 'next/headers';
-import { verify } from 'jsonwebtoken';
-import { getTenantDb } from '@/lib/db';
+import { getSession } from "@/lib/session";
+import { getTenantDb } from "@/lib/db";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Folder } from "lucide-react";
+import { sql } from "drizzle-orm";
 
-import { eq } from 'drizzle-orm';
-import { env } from '@/env.mjs';
+async function getStats(tenantId: string) {
+    const db = await getTenantDb(tenantId);
+    
+    const userCountResult = await db.execute(sql`SELECT COUNT(*) FROM users;`);
+    const roleCountResult = await db.execute(sql`SELECT COUNT(*) FROM roles;`);
 
-export const runtime = 'nodejs';  // Node runtime
+    const userCount = Number((userCountResult.rows[0] as { count: string }).count);
+    const roleCount = Number((roleCountResult.rows[0] as { count: string }).count);
+
+    return { userCount, roleCount };
+}
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
-  const token = (await cookieStore).get('authToken')?.value;
-  if (!token) {
-    return <div>Unauthorized</div>;
-  }
+  const session = await getSession();
+  const stats = await getStats(session.tenantId);
 
-  let decoded;
-  try {
-    decoded = verify(token, env.JWT_SECRET) as { tenantId: string; userId: number };
-
-    const { db: tenantDb, schema } = await getTenantDb(decoded.tenantId);
-    const user = await tenantDb.select().from(schema.users).where(eq(schema.users.id, decoded.userId)).limit(1);
-
-    return (
-      <div className="min-h-screen p-8 bg-gray-100">
-        <h1 className="text-3xl">Welcome to {decoded.tenantId} Dashboard</h1>
-        <p>Email: {user[0]?.email}</p>
+  return (
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">
+        Welcome back, {session.name}! 👋
+      </h1>
+      <p className="text-muted-foreground">
+        Here&apos;s a quick overview of your organization.
+      </p>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.userCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Defined Roles</CardTitle>
+            <Folder className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.roleCount}</div>
+          </CardContent>
+        </Card>
       </div>
-    );
-  } catch (err) {
-    if (err === 'Tenant not found') {
-      return <div>Tenant not found</div>;
-    }
-    return <div>Invalid token</div>;
-  }
+    </div>
+  );
 }

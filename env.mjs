@@ -3,14 +3,19 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().min(1),
-    JWT_SECRET: z.string().min(1),
+    POSTGRES_URL: z.string().url(),
+    JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters long"),
+    NEON_API_KEY: z.string().min(1),
+    NEON_ORG_ID: z.string().min(1),
+    ENCRYPTION_KEY: z.string().min(1, "ENCRYPTION_KEY must be 32 characters long"),
+    
   },
-  client: {
-    // Add any client-side env vars if needed later
-  },
+  client: {},
   runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
+    POSTGRES_URL: process.env.POSTGRES_URL,
     JWT_SECRET: process.env.JWT_SECRET,
+    NEON_API_KEY: process.env.NEON_API_KEY,
+    NEON_ORG_ID: process.env.NEON_ORG_ID,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   },
 });
