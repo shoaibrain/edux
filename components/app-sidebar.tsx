@@ -1,69 +1,66 @@
-import { Sidebar } from "@/components/ui/sidebar";
+"use client"
+
+import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Rocket, Home, Users, Folder, Settings } from "lucide-react"
+
+import { type UserSession } from "@/lib/session"
+
+import { MainNav } from "./main-nav"
 import {
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarRail,
-} from "@/components/ui/sidebar";
-
-import { LucideIcon } from "lucide-react";
-import { TeamSwitcher } from "./team-switcher";
-import { NavMain } from "@/app/dashboard/nav-main";
-import { NavProjects } from "@/app/dashboard/nav-projects";
-
-// Define types for the nav data
-export interface NavMainItem {
-    title: string;
-    url: string;
-    icon: LucideIcon;
-    isActive?: boolean;
-    items?: { title: string; url: string }[];
-}
-
-export interface ProjectItem {
-    name: string;
-    url: string;
-    icon: LucideIcon;
-}
-
-export interface TeamItem {
-    name: string;
-    logo: LucideIcon;
-    plan: string;
-}
-
-export interface NavData {
-    navMain: NavMainItem[];
-    projects: ProjectItem[];
-    teams: TeamItem[];
-}
-
-export interface User {
-    name: string;
-    email: string;
-    avatar: string;
-}
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import { NavUser } from "./user-nav"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-    navData: NavData;
-    user: User;
+    user: UserSession;
 }
 
-export function AppSidebar({ navData, user, ...props }: AppSidebarProps) {
-    return (
-        <Sidebar collapsible="icon" {...props}>
-            <SidebarHeader>
-                <TeamSwitcher teams={navData.teams} />
-            </SidebarHeader>
-            <SidebarContent>
-                <NavMain items={navData.navMain} />
-                <NavProjects projects={navData.projects} />
-            </SidebarContent>
-            <SidebarFooter>
-                {/* <NavUser user={user} /> */}
-                <p>Nav User</p>
-            </SidebarFooter>
-            <SidebarRail />
-        </Sidebar>
-    );
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
+  const { state: sidebarState } = useSidebar(true);
+  const isCollapsed = sidebarState === 'collapsed';
+
+  const navItems = [
+    { title: "Dashboard", url: "/dashboard", iconName: "Home" as const },
+    { title: "Users", url: "/dashboard/users", iconName: "Users" as const },
+    { title: "Roles", url: "/dashboard/roles", iconName: "Folder" as const },
+    { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const },
+  ];
+
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/dashboard">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Rocket className="size-4" />
+                </div>
+                {/* **THE FIX**: This div now correctly handles the collapsed state */}
+                <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
+                  <span className="font-semibold">EduX</span>
+                  <span className="text-xs text-muted-foreground">Tenant Portal</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <MainNav items={navItems} />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter>
+    </Sidebar>
+  )
 }

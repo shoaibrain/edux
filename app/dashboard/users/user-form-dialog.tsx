@@ -41,7 +41,6 @@ export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDi
     return role ? role.id.toString() : '';
   }).filter(Boolean) : [];
 
-  // Correctly typed useForm hook
   const form = useForm<UserFormInput>({
     resolver: zodResolver(UserFormSchema),
     defaultValues: {
