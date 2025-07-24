@@ -28,7 +28,6 @@ interface RoleFormDialogProps {
 export function RoleFormDialog({ isOpen, setIsOpen, role }: RoleFormDialogProps) {
   const isEditMode = !!role;
 
-  // The useForm hook is now correctly typed with RoleFormInput
   const form = useForm<RoleFormInput>({
     resolver: zodResolver(RoleFormSchema),
     // We explicitly handle the possibility of `null` from the database
