@@ -1,5 +1,3 @@
-// In /app/api/tenants/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { TenantSignupDto } from '@/lib/dto/tenant';
@@ -33,10 +31,11 @@ const body = await request.json();
     console.log(`neonProject: ${JSON.stringify(neonProject)}`);
     // 2. Store the new tenant's metadata in your main database
     const encryptedConnectionString = encrypt(connectionString);
+
     await mainDb.insert(tenants).values({
       tenantId,
       name: orgName,
-      neonProjectId: _neonProjectId, // Use the non-nullable constant here
+      neonProjectId: _neonProjectId,
       connectionString: encryptedConnectionString,
     });
     log.info({ tenantId, neonProjectId }, '[API] Tenant metadata stored.');
@@ -70,7 +69,7 @@ const body = await request.json();
     }
     
     log.error({ ...errorDetails, neonProjectId }, '[API] Tenant creation failed.');
-    // --- END OF NEW CATCH BLOCK ---
+    
 
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: err }, { status: 400 });

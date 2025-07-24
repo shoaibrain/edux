@@ -1,64 +1,66 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Folder, Rocket } from "lucide-react"
-import { useSidebar } from "./ui/sidebar"
-import { cn } from "@/lib/utils"
-import { UserNav } from "./user-nav"
+import { Rocket, Home, Users, Folder, Settings } from "lucide-react"
+
 import { type UserSession } from "@/lib/session"
 
-interface AppSidebarProps {
-  user: UserSession;
+import { MainNav } from "./main-nav"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import { NavUser } from "./user-nav"
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+    user: UserSession;
 }
 
-export function AppSidebar({ user }: AppSidebarProps) {
-  const { isCollapsed } = useSidebar()
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
+  const { state: sidebarState } = useSidebar(true);
+  const isCollapsed = sidebarState === 'collapsed';
+
+  const navItems = [
+    { title: "Dashboard", url: "/dashboard", iconName: "Home" as const },
+    { title: "Users", url: "/dashboard/users", iconName: "Users" as const },
+    { title: "Roles", url: "/dashboard/roles", iconName: "Folder" as const },
+    { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const },
+  ];
 
   return (
-    <aside className={cn(
-      "fixed left-0 top-0 z-20 flex h-screen w-full flex-col border-r",
-      !isCollapsed ? "w-64" : "w-[52px]"
-    )}>
-        <div className="flex h-14 items-center border-b px-4">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                <Rocket className="h-6 w-6" />
-                {!isCollapsed && <span>EduX</span>}
-            </Link>
-        </div>
-        <nav className="flex flex-col gap-2 p-2">
-            <SidebarLink href="/dashboard" icon={<Home className="size-4" />} isCollapsed={isCollapsed}>
-                Dashboard
-            </SidebarLink>
-            <SidebarLink href="/dashboard/users" icon={<Users className="size-4" />} isCollapsed={isCollapsed}>
-                Users
-            </SidebarLink>
-            <SidebarLink href="/dashboard/roles" icon={<Folder className="size-4" />} isCollapsed={isCollapsed}>
-                Roles
-            </SidebarLink>
-        </nav>
-        <div className="mt-auto border-t p-2">
-            <UserNav user={user} isCollapsed={isCollapsed} />
-        </div>
-    </aside>
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/dashboard">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Rocket className="size-4" />
+                </div>
+                {/* **THE FIX**: This div now correctly handles the collapsed state */}
+                <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
+                  <span className="font-semibold">EduX</span>
+                  <span className="text-xs text-muted-foreground">Tenant Portal</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <MainNav items={navItems} />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter>
+    </Sidebar>
   )
-}
-
-function SidebarLink({ href, icon, children, isCollapsed }: { href: string; icon: React.ReactNode; children: React.ReactNode; isCollapsed: boolean; }) {
-    const pathname = usePathname();
-    const isActive = pathname === href;
-    return (
-        <Link 
-            href={href} 
-            className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                isActive && "bg-muted text-primary",
-                isCollapsed && "justify-center"
-            )}
-            title={isCollapsed ? String(children) : undefined}
-        >
-            {icon}
-            {!isCollapsed && <span className="truncate">{children}</span>}
-        </Link>
-    )
 }

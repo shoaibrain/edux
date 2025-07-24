@@ -1,4 +1,3 @@
-// middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
 import logger from './lib/logger';
 
@@ -27,6 +26,9 @@ export function middleware(request: NextRequest) {
   const log = logger.child({ tenantId, pathname });
 
   log.info('Middleware processing request');
+
+  console.log('Incoming cookies:', request.cookies.getAll());
+  console.log('TenantId:', tenantId, 'Pathname:', pathname);
 
   const headers = new Headers(request.headers);
   if (tenantId) {
