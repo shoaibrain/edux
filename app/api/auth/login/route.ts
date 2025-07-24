@@ -45,6 +45,10 @@ export async function POST(request: NextRequest) {
       maxAge: 8 * 60 * 60, // 8 hours
     });
 
+    console.log('Setting cookie for domain:', process.env.NODE_ENV === 'development' ? '.localhost' : '.yourdomain.com');
+    console.log('Request host:', request.headers.get('host'));
+    console.log('Response Set-Cookie:', response.headers.get('set-cookie'));
+
     return response;
 
   } catch (err) {

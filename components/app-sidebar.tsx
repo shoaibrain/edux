@@ -1,64 +1,69 @@
-"use client"
+import { Sidebar } from "@/components/ui/sidebar";
+import {
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarRail,
+} from "@/components/ui/sidebar";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Home, Users, Folder, Rocket } from "lucide-react"
-import { useSidebar } from "./ui/sidebar"
-import { cn } from "@/lib/utils"
-import { UserNav } from "./user-nav"
-import { type UserSession } from "@/lib/session"
+import { LucideIcon } from "lucide-react";
+import { TeamSwitcher } from "./team-switcher";
+import { NavMain } from "@/app/dashboard/nav-main";
+import { NavProjects } from "@/app/dashboard/nav-projects";
 
-interface AppSidebarProps {
-  user: UserSession;
+// Define types for the nav data
+export interface NavMainItem {
+    title: string;
+    url: string;
+    icon: LucideIcon;
+    isActive?: boolean;
+    items?: { title: string; url: string }[];
 }
 
-export function AppSidebar({ user }: AppSidebarProps) {
-  const { isCollapsed } = useSidebar()
-
-  return (
-    <aside className={cn(
-      "fixed left-0 top-0 z-20 flex h-screen w-full flex-col border-r",
-      !isCollapsed ? "w-64" : "w-[52px]"
-    )}>
-        <div className="flex h-14 items-center border-b px-4">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                <Rocket className="h-6 w-6" />
-                {!isCollapsed && <span>EduX</span>}
-            </Link>
-        </div>
-        <nav className="flex flex-col gap-2 p-2">
-            <SidebarLink href="/dashboard" icon={<Home className="size-4" />} isCollapsed={isCollapsed}>
-                Dashboard
-            </SidebarLink>
-            <SidebarLink href="/dashboard/users" icon={<Users className="size-4" />} isCollapsed={isCollapsed}>
-                Users
-            </SidebarLink>
-            <SidebarLink href="/dashboard/roles" icon={<Folder className="size-4" />} isCollapsed={isCollapsed}>
-                Roles
-            </SidebarLink>
-        </nav>
-        <div className="mt-auto border-t p-2">
-            <UserNav user={user} isCollapsed={isCollapsed} />
-        </div>
-    </aside>
-  )
+export interface ProjectItem {
+    name: string;
+    url: string;
+    icon: LucideIcon;
 }
 
-function SidebarLink({ href, icon, children, isCollapsed }: { href: string; icon: React.ReactNode; children: React.ReactNode; isCollapsed: boolean; }) {
-    const pathname = usePathname();
-    const isActive = pathname === href;
+export interface TeamItem {
+    name: string;
+    logo: LucideIcon;
+    plan: string;
+}
+
+export interface NavData {
+    navMain: NavMainItem[];
+    projects: ProjectItem[];
+    teams: TeamItem[];
+}
+
+export interface User {
+    name: string;
+    email: string;
+    avatar: string;
+}
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+    navData: NavData;
+    user: User;
+}
+
+export function AppSidebar({ navData, user, ...props }: AppSidebarProps) {
     return (
-        <Link 
-            href={href} 
-            className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                isActive && "bg-muted text-primary",
-                isCollapsed && "justify-center"
-            )}
-            title={isCollapsed ? String(children) : undefined}
-        >
-            {icon}
-            {!isCollapsed && <span className="truncate">{children}</span>}
-        </Link>
-    )
+        <Sidebar collapsible="icon" {...props}>
+            <SidebarHeader>
+                <TeamSwitcher teams={navData.teams} />
+            </SidebarHeader>
+            <SidebarContent>
+                <NavMain items={navData.navMain} />
+                <NavProjects projects={navData.projects} />
+            </SidebarContent>
+            <SidebarFooter>
+                {/* <NavUser user={user} /> */}
+                <p>Nav User</p>
+            </SidebarFooter>
+            <SidebarRail />
+        </Sidebar>
+    );
 }
