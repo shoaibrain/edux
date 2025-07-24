@@ -47,7 +47,7 @@ export function DeleteAccountForm() {
               name="confirm"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>To confirm, type "delete my account" below</FormLabel>
+                  <FormLabel>To confirm, type &quot;delete my account&quot; below</FormLabel>
                   <FormControl><Input {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
