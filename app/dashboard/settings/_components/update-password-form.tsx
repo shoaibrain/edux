@@ -33,7 +33,7 @@ export function UpdatePasswordForm() {
     <Card>
       <CardHeader>
         <CardTitle>Change Password</CardTitle>
-        <CardDescription>Update your password here. It's recommended to use a strong, unique password.</CardDescription>
+        <CardDescription>Update your password here. It recommended to use a strong, unique password.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
