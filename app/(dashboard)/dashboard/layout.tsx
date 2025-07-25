@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getSession, UserSession } from "@/lib/session"
-import React, { use } from "react"
+import React from "react"
 import {
   SidebarProvider,
   SidebarInset,

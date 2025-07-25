@@ -13,12 +13,19 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { deleteRole } from "@/lib/actions/role"
-import type { roles } from "@/lib/db/schema/tenant"
+import type { roles, permissions } from "@/lib/db/schema/tenant" 
+import { Badge } from "@/components/ui/badge" 
 
-export type Role = typeof roles.$inferSelect;
+// Update Role type to include permissions as an array of the full permission objects,
+// as returned by getRoles.
+export type Role = (typeof roles.$inferSelect) & {
+    permissions?: (typeof permissions.$inferSelect)[]; 
+};
 
 export const getColumns = (
-    onEdit?: (role: Role) => void
+    onEdit: (role: Role) => void, 
+    canEditRole: boolean, 
+    canDeleteRole: boolean 
 ): ColumnDef<Role>[] => [
     {
         accessorKey: "name",
@@ -29,9 +36,29 @@ export const getColumns = (
         header: "Description",
     },
     {
+        accessorKey: "permissions", 
+        header: "Permissions",
+        cell: ({ row }) => {
+            const role = row.original;
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {role.permissions && role.permissions.length > 0 ? (
+                        role.permissions.map(perm => (
+                            <Badge key={perm.id} variant="secondary">
+                                {perm.name}
+                            </Badge>
+                        ))
+                    ) : (
+                        <span className="text-muted-foreground text-xs">No permissions assigned</span>
+                    )}
+                </div>
+            );
+        },
+    },
+    {
         id: "actions",
         cell: ({ row }) => {
-            const role = row.original
+            const role = row.original;
 
             const handleDelete = async () => {
                 if (window.confirm(`Are you sure you want to delete role "${role.name}"?`)) {
@@ -44,6 +71,10 @@ export const getColumns = (
                 }
             };
 
+            if (!canEditRole && !canDeleteRole) {
+                return null;
+            }
+
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -54,13 +85,17 @@ export const getColumns = (
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        {onEdit && <DropdownMenuItem onClick={() => onEdit(role)}>
-                            Edit Role
-                        </DropdownMenuItem>}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
-                            Delete Role
-                        </DropdownMenuItem>
+                        {canEditRole && (
+                            <DropdownMenuItem onClick={() => onEdit(role)}>
+                                Edit Role
+                            </DropdownMenuItem>
+                        )}
+                        {canEditRole && canDeleteRole && <DropdownMenuSeparator />}
+                        {canDeleteRole && (
+                            <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
+                                Delete Role
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

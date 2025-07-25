@@ -18,10 +18,14 @@ export type User = {
   id: number
   name: string
   email: string
-  roles: string
+  roles: string // This will be a comma-separated string of role names
 }
 
-export const getColumns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
+export const getColumns = (
+    onEdit: (user: User) => void,
+    canEditUser: boolean, // New prop: indicates if the current user can edit ANY user
+    canDeleteUser: boolean // New prop: indicates if the current user can delete ANY user
+): ColumnDef<User>[] => [
     {
         accessorKey: "name",
         header: "Name",
@@ -37,9 +41,11 @@ export const getColumns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
     {
         id: "actions",
         cell: ({ row }) => {
-            const user = row.original
-
+            const user = row.original; // The user object for the current row
+            
             const handleDelete = async () => {
+                // Using window.confirm is generally discouraged in favor of custom dialogs
+                // for better UX and consistency, but keeping it as per existing pattern.
                 if (window.confirm(`Are you sure you want to delete user ${user.name}?`)) {
                   const result = await deleteUserAction(user.id);
                   if (result.success) {
@@ -49,6 +55,11 @@ export const getColumns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
                   }
                 }
             };
+
+            // Only show the dropdown menu if the current user has either edit or delete permission
+            if (!canEditUser && !canDeleteUser) {
+                return null;
+            }
 
             return (
                 <DropdownMenu>
@@ -60,13 +71,20 @@ export const getColumns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => onEdit(user)}>
-                            Edit User
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
-                            Delete User
-                        </DropdownMenuItem>
+                        {/* Conditionally render Edit User menu item */}
+                        {canEditUser && (
+                            <DropdownMenuItem onClick={() => onEdit(user)}>
+                                Edit User
+                            </DropdownMenuItem>
+                        )}
+                        {/* Add separator only if both edit and delete actions are available */}
+                        {canEditUser && canDeleteUser && <DropdownMenuSeparator />}
+                        {/* Conditionally render Delete User menu item */}
+                        {canDeleteUser && (
+                            <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
+                                Delete User
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

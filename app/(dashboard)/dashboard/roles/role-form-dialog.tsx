@@ -15,35 +15,85 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { RoleFormSchema, RoleFormInput } from '@/lib/dto/role';
-import { upsertRole } from '@/lib/actions/role';
+import { upsertRole, getRoles } from '@/lib/actions/role'; 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { Role } from './columns';
+import { MultiSelect } from '@/components/ui/multi-select'; 
+import type { permissions } from '@/lib/db/schema/tenant';
 
 interface RoleFormDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   role: Role | null;
+  canAssignRolePermissions: boolean; 
 }
 
-export function RoleFormDialog({ isOpen, setIsOpen, role }: RoleFormDialogProps) {
+export function RoleFormDialog({ isOpen, setIsOpen, role, canAssignRolePermissions }: RoleFormDialogProps) {
   const isEditMode = !!role;
+  const [allPermissions, setAllPermissions] = React.useState<Array<typeof permissions.$inferSelect>>([]); // Explicitly type the state
+  const [isLoadingPermissions, setIsLoadingPermissions] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchPermissions() {
+      setIsLoadingPermissions(true);
+      try {
+        const allRolesWithPermissions = await getRoles(); 
+        const uniquePermissions = new Map<number, typeof permissions.$inferSelect>(); // Explicitly type the Map
+        allRolesWithPermissions.forEach(r => {
+            r.permissions?.forEach((p: typeof permissions.$inferSelect) => { // Explicitly type 'p' here
+                if (!uniquePermissions.has(p.id)) {
+                    uniquePermissions.set(p.id, p);
+                }
+            });
+        });
+        setAllPermissions(Array.from(uniquePermissions.values()));
+      } catch (error) {
+        toast.error("Failed to load permissions.");
+        console.error("Failed to load permissions:", error);
+      } finally {
+        setIsLoadingPermissions(false);
+      }
+    }
+    if (isOpen && canAssignRolePermissions) { 
+      fetchPermissions();
+    }
+  }, [isOpen, canAssignRolePermissions]);
+
+  const permissionOptions = allPermissions.map(perm => ({
+    value: perm.name, 
+    label: perm.name,
+  }));
+
+  // Use React.useMemo to memoize defaultSelectedPermissions
+  const defaultSelectedPermissions = React.useMemo(() => {
+    return role?.permissions?.map(p => p.name) || [];
+  }, [role]); // Dependency array for useMemo
 
   const form = useForm<RoleFormInput>({
     resolver: zodResolver(RoleFormSchema),
-    // We explicitly handle the possibility of `null` from the database
-    // and provide default values that match the schema (`string` or `undefined`).
     defaultValues: {
         id: role?.id,
         name: role?.name || '',
         description: role?.description || '',
+        permissions: defaultSelectedPermissions, 
     },
   });
+
+  React.useEffect(() => {
+    form.reset({
+      id: role?.id,
+      name: role?.name || '',
+      description: role?.description || '',
+      permissions: defaultSelectedPermissions,
+    });
+  }, [role, defaultSelectedPermissions, form]);
+
 
   const onSubmit = async (values: RoleFormInput) => {
     const result = await upsertRole(values);
     if (result.success) {
       toast.success(result.message);
-      setIsOpen(false);
+      setIsOpen(false); 
     } else {
       toast.error(result.message);
     }
@@ -86,6 +136,26 @@ export function RoleFormDialog({ isOpen, setIsOpen, role }: RoleFormDialogProps)
                         </FormItem>
                     )}
                 />
+                {canAssignRolePermissions && !isLoadingPermissions && (
+                    <FormField
+                        control={form.control}
+                        name="permissions"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Permissions</FormLabel>
+                                <FormControl>
+                                    <MultiSelect
+                                        options={permissionOptions}
+                                        defaultValue={field.value as string[]} 
+                                        onValueChange={field.onChange}
+                                        placeholder="Select permissions..."
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
                 <DialogFooter>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? 'Saving...' : 'Save Role'}

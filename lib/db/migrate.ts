@@ -11,7 +11,7 @@ export async function runTenantMigrations(connectionString: string) {
 
   try {
     log.info('Starting tenant migration...');
-    await migrate(db, { migrationsFolder: './drizzle/tenant' }); // Assumes tenant migrations are in 'drizzle/tenant'
+    await migrate(db, { migrationsFolder: './drizzle/tenant' });
     log.info('Tenant migration completed successfully.');
   } catch (error) {
     log.error({ error }, 'Tenant migration failed.');
