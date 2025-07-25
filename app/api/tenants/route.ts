@@ -7,7 +7,7 @@ import { tenants } from '@/lib/db/schema/shared';
 import * as tenantSchema from '@/lib/db/schema/tenant';
 import { encrypt } from '@/lib/crypto';
 import { runTenantMigrations } from '@/lib/db/migrate';
-import { seedTenantData } from '@/scripts/seed-tenant-data'; // Import the new seeding script
+import { seedTenantData } from '@/scripts/seed-tenant-data';
 import log from '@/lib/logger';
 import z from 'zod';
 import { eq } from 'drizzle-orm';

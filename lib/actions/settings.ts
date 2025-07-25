@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import log from '../logger';
-import { getSession, enforcePermission } from '../session';
+import { getSession } from '../session';
 import { getTenantDb } from '../db';
 import { users } from '../db/schema/tenant';
 import { UpdateProfileSchema, UpdatePasswordSchema } from '../dto/settings';
@@ -77,6 +77,7 @@ export async function updatePasswordAction(data: unknown) {
         await db.update(users)
             .set({ password: hashedNewPassword })
             .where(eq(users.id, session.userId));
+        // TODO: After password update, what happens to user session, cookie JWT?
         
         log.info({ userId: session.userId }, "Password updated successfully.");
         return { success: true, message: "Password updated successfully." };
@@ -95,6 +96,9 @@ export async function deleteAccountAction() {
     const db = await getTenantDb(session.tenantId);
 
     try {
+        // TODO: set flag deleted
+        // TOOD: How to handle if user is deleting their own account?
+        // How to handle when tenant admin user is deleting their own account. DO NOT ALLOW THIS?
         await db.delete(users).where(eq(users.id, session.userId));
         log.info({ userId: session.userId, tenantId: session.tenantId }, "User account deleted successfully.");
         // After deletion, log the user out and redirect

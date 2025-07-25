@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"; // Import ThemeProv
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "EduX SaaS",
+  title: "EduX",
   description: "Enterprise School Management",
 };
 
