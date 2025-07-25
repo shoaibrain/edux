@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input"
 import { UserFormDialog } from "./user-form-dialog"
 import { getColumns, User } from "./columns"
 import type { roles } from "@/lib/db/schema/tenant"
+import { useTenant } from "@/components/tenant-provider"
+import { toast } from "sonner"
 
 interface DataTableProps {
   data: User[]
@@ -38,17 +40,35 @@ export function DataTable({ data, allRoles }: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
+  const { user } = useTenant(); // Access user permissions from context
+
+  // Check permissions for UI rendering
+  const canCreateUser = user.permissions.includes('user:create');
+  const canEditUser = user.permissions.includes('user:update');
+  const canDeleteUser = user.permissions.includes('user:delete');
+
   const handleEdit = React.useCallback((user: User) => {
+    // Client-side guard for UI, server-side action will enforce
+    if (!canEditUser) {
+      toast.error("You do not have permission to edit users.");
+      return;
+    }
     setEditingUser(user);
     setIsDialogOpen(true);
-  }, []);
+  }, [canEditUser]);
 
   const handleCreate = React.useCallback(() => {
+    // Client-side guard for UI, server-side action will enforce
+    if (!canCreateUser) {
+      toast.error("You do not have permission to create users.");
+      return;
+    }
     setEditingUser(null);
     setIsDialogOpen(true);
-  }, []);
+  }, [canCreateUser]);
   
-  const columns = React.useMemo(() => getColumns(handleEdit), [handleEdit]);
+  // Pass permissions to columns for conditional rendering of actions
+  const columns = React.useMemo(() => getColumns(handleEdit, canEditUser, canDeleteUser), [handleEdit, canEditUser, canDeleteUser]);
 
   const table = useReactTable({
     data,
@@ -76,7 +96,8 @@ export function DataTable({ data, allRoles }: DataTableProps) {
                 }
                 className="max-w-sm"
             />
-            <Button onClick={handleCreate}>Create User</Button>
+            {/* Conditionally render Create User button */}
+            {canCreateUser && <Button onClick={handleCreate}>Create User</Button>}
         </div>
         <div className="rounded-md border">
         <Table>
@@ -130,13 +151,16 @@ export function DataTable({ data, allRoles }: DataTableProps) {
             Next
             </Button>
       </div>
-      <UserFormDialog
-        key={editingUser?.id} // Add key to force re-mount and reset form state
-        isOpen={isDialogOpen}
-        setIsOpen={setIsDialogOpen}
-        user={editingUser}
-        allRoles={allRoles}
-      />
+      {/* Only render dialog if user has permission to create or edit */}
+      {(canCreateUser || canEditUser) && ( 
+        <UserFormDialog
+          key={editingUser?.id} // Add key to force re-mount and reset form state
+          isOpen={isDialogOpen}
+          setIsOpen={setIsDialogOpen}
+          user={editingUser}
+          allRoles={allRoles}
+        />
+      )}
     </div>
   )
 }

@@ -1,8 +1,11 @@
 import { getUsersWithRoles } from "@/lib/actions/user";
 import { getRoles } from "@/lib/actions/role";
 import { DataTable } from "./data-table";
+import { enforcePermission } from "@/lib/session";
 
 export default async function UsersPage() {
+  await enforcePermission('user:read'); // Enforce permission to view users
+
   const [users, roles] = await Promise.all([
     getUsersWithRoles(),
     getRoles(),

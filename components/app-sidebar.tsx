@@ -28,11 +28,15 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const { state: sidebarState } = useSidebar(true);
   const isCollapsed = sidebarState === 'collapsed';
 
+  // TODO Get Correct tenant aware and user aware nav items
   const navItems = [
     { title: "Dashboard", url: "/dashboard", iconName: "Home" as const },
-    { title: "Users", url: "/dashboard/users", iconName: "Users" as const },
+    { title: "People", url: "/dashboard/people", iconName: "Users" as const },
     { title: "Roles", url: "/dashboard/roles", iconName: "Folder" as const },
     { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const },
+    { title: "Billings", url: "/dashboard/billing", iconName: "Settings" as const },
+    { title: "Integrations", url: "/dashboard/integrations", iconName: "Settings" as const },
+
   ];
 
   return (
@@ -45,7 +49,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Rocket className="size-4" />
                 </div>
-                {/* **THE FIX**: This div now correctly handles the collapsed state */}
+                
                 <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
                   <span className="font-semibold">EduX</span>
                   <span className="text-xs text-muted-foreground">Tenant Portal</span>

@@ -1,22 +1,29 @@
-import { getSession } from "@/lib/session";
+import { getSession, enforcePermission } from "@/lib/session"; // Import enforcePermission
 import { getTenantDb } from "@/lib/db";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Folder, Building, UserCircle } from "lucide-react";
 import { sql } from "drizzle-orm";
 
-
 async function getStats(tenantId: string) {
+    // No explicit permission check here, as enforcePermission will be called in the page.
     const db = await getTenantDb(tenantId);
-    const userCountResult = await db.execute(sql`SELECT COUNT(*) FROM users;`);
-    const roleCountResult = await db.execute(sql`SELECT COUNT(*) FROM roles;`);
-    const userCount = Number((userCountResult.rows[0] as { count: string }).count);
-    const roleCount = Number((roleCountResult.rows[0] as { count: string }).count);
-    return { userCount, roleCount };
+    try {
+        const userCountResult = await db.execute(sql`SELECT COUNT(*) FROM users;`);
+        const roleCountResult = await db.execute(sql`SELECT COUNT(*) FROM roles;`);
+        const userCount = Number((userCountResult.rows[0] as { count: string }).count);
+        const roleCount = Number((roleCountResult.rows[0] as { count: string }).count);
+        return { userCount, roleCount };
+    } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+        // In a real app, you might want to log this error and return default/empty stats
+        return { userCount: 0, roleCount: 0 };
+    }
 }
 
 export default async function DashboardPage() {
-  // The layout already secures the page, but we get the session here
-  // to access the data for rendering.
+  // Enforce permission to view the dashboard
+  await enforcePermission('dashboard:view');
+
   const session = await getSession();
   const stats = await getStats(session.tenantId);
 

@@ -18,8 +18,24 @@ export async function POST(request: NextRequest) {
     log.info({ tenantId, email }, '[API] Login attempt.');
 
     const tenantDb = await getTenantDb(tenantId);
+    // Fetch user with all associated roles and their permissions
     const userResult = await tenantDb.query.users.findFirst({
       where: eq(tenantSchema.users.email, email),
+      with: {
+        usersToRoles: {
+          with: {
+            role: {
+              with: {
+                rolesToPermissions: {
+                  with: {
+                    permission: true, // Ensure full permission object is fetched
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!userResult) {
@@ -33,7 +49,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const token = jwt.sign({ tenantId, userId: userResult.id }, env.JWT_SECRET, { expiresIn: '8h' });
+    // Aggregate all unique permission names for the user
+    const userPermissions = new Set<string>();
+    userResult.usersToRoles.forEach(userRole => {
+      userRole.role.rolesToPermissions.forEach(rolePermission => {
+        userPermissions.add(rolePermission.permission.name); // Add only the name to the set
+      });
+    });
+
+    // Create JWT payload with tenantId, userId, name, email, and permissions
+    const tokenPayload = {
+      tenantId,
+      userId: userResult.id,
+      name: userResult.name, // Include name from DB fetch
+      email: userResult.email, // Include email from DB fetch
+      permissions: Array.from(userPermissions), // Include permission names in the token
+    };
+
+    const token = jwt.sign(tokenPayload, env.JWT_SECRET, { expiresIn: '8h' });
     log.info({ tenantId, userId: userResult.id }, '[API] Login successful.');
 
     const response = NextResponse.json({ message: 'Login successful' });

@@ -18,8 +18,6 @@ export default async function SettingsPage() {
   });
 
   if (!currentUser) {
-    // The layout's getSession would already have caught an invalid session,
-    // but this handles the rare case where the user was deleted mid-session.
     return <div>User not found in this tenant.</div>;
   }
 
