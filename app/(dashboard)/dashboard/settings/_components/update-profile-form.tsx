@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,18 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UpdateProfileSchema, UpdateProfileInput } from "@/lib/dto/settings";
 import { updateProfileAction } from "@/lib/actions/settings";
-import type { users } from "@/lib/db/schema/tenant";
+import { UserSession } from "@/lib/session"; // Import UserSession type
 
 interface UpdateProfileFormProps {
-  user: typeof users.$inferSelect;
+  user: UserSession; // Accept user prop
 }
 
-export function UpdateProfileForm({ user }: UpdateProfileFormProps) {
+export default function UpdateProfileForm({ user }: UpdateProfileFormProps) { // Change to default export and accept props
   const form = useForm<UpdateProfileInput>({
     resolver: zodResolver(UpdateProfileSchema),
     defaultValues: {
-      name: user.name,
-      email: user.email,
+      name: user.name, // Pre-fill with current user's name from session
+      email: user.email, // Pre-fill with current user's email from session
     },
   });
 
@@ -28,26 +28,30 @@ export function UpdateProfileForm({ user }: UpdateProfileFormProps) {
     const result = await updateProfileAction(values);
     if (result.success) {
       toast.success(result.message);
+      // Re-fetch session or update context if needed after successful profile update
     } else {
       toast.error(result.message);
+      if (!result.success) {
+        form.setError("email", { type: "server", message: result.message });
+      }
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>General Information</CardTitle>
-        <CardDescription>Update your personal details here.</CardDescription>
+        <CardTitle>Update Profile</CardTitle>
+        <CardDescription>Update your account profile information.</CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <CardContent>
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl><Input {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -58,7 +62,7 @@ export function UpdateProfileForm({ user }: UpdateProfileFormProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl><Input type="email" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -67,7 +71,7 @@ export function UpdateProfileForm({ user }: UpdateProfileFormProps) {
           </CardContent>
           <CardFooter className="border-t px-6 py-4">
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+              {form.formState.isSubmitting ? "Updating..." : "Update Profile"}
             </Button>
           </CardFooter>
         </form>

@@ -1,11 +1,10 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Rocket, Home, Users, Folder, Settings } from "lucide-react"
+import { Rocket, DollarSign, Plug, Home, Users, Folder, Settings } from "lucide-react" 
 
 import { type UserSession } from "@/lib/session"
+import { useTenant } from "@/components/tenant-provider" 
 
 import { MainNav } from "./main-nav"
 import {
@@ -21,23 +20,29 @@ import {
 import { NavUser } from "./user-nav"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-    user: UserSession;
+    user: UserSession; 
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const { state: sidebarState } = useSidebar(true);
-  const isCollapsed = sidebarState === 'collapsed';
+  const { user: currentUserSession } = useTenant(); 
 
-  // TODO Get Correct tenant aware and user aware nav items
-  const navItems = [
-    { title: "Dashboard", url: "/dashboard", iconName: "Home" as const },
-    { title: "People", url: "/dashboard/people", iconName: "Users" as const },
-    { title: "Roles", url: "/dashboard/roles", iconName: "Folder" as const },
-    { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const },
-    { title: "Billings", url: "/dashboard/billing", iconName: "Settings" as const },
-    { title: "Integrations", url: "/dashboard/integrations", iconName: "Settings" as const },
-
+  const allNavItems = [
+    { title: "Dashboard", url: "/dashboard", iconName: "Home" as const, requiredPermission: 'dashboard:view' },
+    { title: "People", url: "/dashboard/people", iconName: "Users" as const, requiredPermission: 'person:read' }, // Updated permission to 'person:read'
+    { title: "Roles", url: "/dashboard/roles", iconName: "Folder" as const, requiredPermission: 'role:read' },
+    { title: "Schools", url: "/dashboard/schools", iconName: "Home" as const, requiredPermission: 'school:read' }, 
+    { title: "Billings", url: "/dashboard/billing", iconName: "DollarSign" as const, requiredPermission: 'tenant:view_billing' },
+    { title: "Integrations", url: "/dashboard/integrations", iconName: "Plug" as const, requiredPermission: 'tenant:manage' }, 
+    { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const, requiredPermission: null }, 
   ];
+
+  const navItems = allNavItems.filter(item => {
+    if (!item.requiredPermission) {
+      return true; 
+    }
+    return currentUserSession.permissions.includes(item.requiredPermission);
+  });
 
   return (
     <Sidebar collapsible="icon" {...props}>

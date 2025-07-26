@@ -1,39 +1,25 @@
-import { getSession } from "@/lib/session";
-import { getTenantDb } from "@/lib/db";
-import { eq } from "drizzle-orm";
-import { users } from "@/lib/db/schema/tenant";
 import { Separator } from "@/components/ui/separator";
-import { UpdateProfileForm } from "./_components/update-profile-form";
+import UpdateProfileForm from "./_components/update-profile-form"; // Corrected to default import
 import { UpdatePasswordForm } from "./_components/update-password-form";
 import { DeleteAccountForm } from "./_components/delete-account-form";
+import { getSession } from "@/lib/session"; // Import getSession
 
-// This page is automatically protected by the dashboard layout.
-export default async function SettingsPage() {
-  const session = await getSession();
-  const db = await getTenantDb(session.tenantId);
-
-  // We still need to fetch the specific user details for the form defaults
-  const currentUser = await db.query.users.findFirst({
-    where: eq(users.id, session.userId),
-  });
-
-  if (!currentUser) {
-    return <div>User not found in this tenant.</div>;
-  }
+export default async function SettingsPage() { // Make it async to fetch session
+  const session = await getSession(); // Fetch current user session
+  // You can pass the user object to UpdateProfileForm if needed, e.g., to pre-fill fields
+  const currentUser = session; 
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences.
+        <h3 className="text-lg font-medium">Settings</h3>
+        <p className="text-sm text-muted-foreground">
+          Manage your account settings and set e-mail preferences.
         </p>
       </div>
       <Separator />
-      <UpdateProfileForm user={currentUser} />
-      <Separator />
+      <UpdateProfileForm user={currentUser} /> {/* Pass user to the component */}
       <UpdatePasswordForm />
-      <Separator />
       <DeleteAccountForm />
     </div>
   );

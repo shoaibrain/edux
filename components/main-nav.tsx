@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Folder, Settings, type LucideIcon } from "lucide-react" // Add Settings icon
+import { Home, Users, Folder, Settings, DollarSign, Plug, type LucideIcon } from "lucide-react" // Import DollarSign and Plug icons
 
 import {
   SidebarMenu,
@@ -11,19 +11,20 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-// The icon map now includes the Settings icon
+// The icon map now includes all necessary icons
 const iconMap: { [key: string]: LucideIcon } = {
   Home,
   Users,
   Folder,
   Settings,
+  DollarSign, // Added missing icon
+  Plug,       // Added missing icon
 };
 
-// **THE FIX**: The type now correctly expects `iconName`.
 interface NavItem {
   title: string;
   url: string;
-  iconName: keyof typeof iconMap;
+  iconName: keyof typeof iconMap; // This type correctly enforces valid icon names
 }
 
 interface MainNavProps {
@@ -36,7 +37,7 @@ export function MainNav({ items }: MainNavProps) {
   return (
     <SidebarMenu>
       {items.map((item) => {
-        const Icon = iconMap[item.iconName];
+        const Icon = iconMap[item.iconName]; // Icon will now be correctly resolved
         return (
           <SidebarMenuItem key={item.url}>
             <SidebarMenuButton
@@ -45,7 +46,7 @@ export function MainNav({ items }: MainNavProps) {
               tooltip={item.title}
             >
               <Link href={item.url}>
-                <Icon />
+                <Icon /> {/* This will now be a valid React component */}
                 <span>{item.title}</span>
               </Link>
             </SidebarMenuButton>

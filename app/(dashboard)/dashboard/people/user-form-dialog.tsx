@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -18,8 +18,14 @@ import { MultiSelect } from '@/components/ui/multi-select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { UserFormSchema, UserFormInput } from '@/lib/dto/user';
 import { upsertUserAction } from '@/lib/actions/user';
-import type { roles } from '@/lib/db/schema/tenant';
-import type { User } from './columns';
+import type { roles, users } from '@/lib/db/schema/tenant';
+import { useTenant } from '@/components/tenant-provider';
+
+// Define the User type based on Drizzle's inference for the users table
+export type User = (typeof users.$inferSelect) & {
+    roles: string; // This will be a comma-separated string of role names from getUsersWithRoles
+};
+
 
 interface UserFormDialogProps {
   isOpen: boolean;
@@ -30,13 +36,16 @@ interface UserFormDialogProps {
 
 export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDialogProps) {
   const isEditMode = !!user;
+  const { user: currentUserSession } = useTenant();
+
+  const canAssignRoles = currentUserSession.permissions.includes('user:assign_roles');
 
   const roleOptions = allRoles.map(role => ({
     value: role.id.toString(),
     label: role.name,
   }));
 
-  const userRoleValues = user ? user.roles.split(', ').filter(Boolean).map(roleName => {
+  const userRoleValues = user ? user.roles.split(', ').filter(Boolean).map((roleName: string) => { // Explicitly type roleName
     const role = allRoles.find(r => r.name === roleName);
     return role ? role.id.toString() : '';
   }).filter(Boolean) : [];
@@ -45,12 +54,21 @@ export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDi
     resolver: zodResolver(UserFormSchema),
     defaultValues: {
       id: user?.id,
-      name: user?.name || '',
       email: user?.email || '',
-      password: '', // Always start with an empty password field
+      password: '',
       roles: userRoleValues,
     },
   });
+
+  React.useEffect(() => {
+    form.reset({
+      id: user?.id,
+      email: user?.email || '',
+      password: '',
+      roles: userRoleValues,
+    });
+  }, [user, userRoleValues, form]);
+
 
   const onSubmit = async (values: UserFormInput) => {
     const dataToSend = { ...values };
@@ -83,17 +101,6 @@ export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDi
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -114,24 +121,26 @@ export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDi
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="roles"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Roles</FormLabel>
-                   <FormControl>
-                      <MultiSelect
-                        options={roleOptions}
-                        defaultValue={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Select roles..."
-                      />
-                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {canAssignRoles && (
+                <FormField
+                  control={form.control}
+                  name="roles"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Roles</FormLabel>
+                       <FormControl>
+                          <MultiSelect
+                            options={roleOptions}
+                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Select roles..."
+                          />
+                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            )}
             <DialogFooter>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create User'}

@@ -11,43 +11,70 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { deleteUserAction } from "@/lib/actions/user"
 import { toast } from "sonner"
+import { deletePersonAction } from "@/lib/actions/person" 
+import type { people, users, schools, usersToRoles } from "@/lib/db/schema/tenant"; 
 
-export type User = {
-  id: number
-  name: string
-  email: string
-  roles: string // This will be a comma-separated string of role names
-}
+// Definitive Person type: extending Drizzle's inferred type with eager-loaded relations
+export type Person = (typeof people.$inferSelect) & {
+    user?: (typeof users.$inferSelect & { usersToRoles?: (typeof usersToRoles.$inferSelect)[] }) | null; 
+    school?: typeof schools.$inferSelect | null; 
+};
 
 export const getColumns = (
-    onEdit: (user: User) => void,
-    canEditUser: boolean, // New prop: indicates if the current user can edit ANY user
-    canDeleteUser: boolean // New prop: indicates if the current user can delete ANY user
-): ColumnDef<User>[] => [
+    onEdit: (person: Person) => void, // onEdit strictly expects a Person object (database type)
+    canEditPerson: boolean,
+    canDeletePerson: boolean,
+    canGrantAccess: boolean 
+): ColumnDef<Person>[] => [
     {
-        accessorKey: "name",
-        header: "Name",
+        accessorKey: "firstName",
+        header: "First Name",
     },
     {
-        accessorKey: "email",
-        header: "Email",
+        accessorKey: "lastName",
+        header: "Last Name",
     },
     {
-        accessorKey: "roles",
-        header: "Roles",
+        accessorKey: "personType",
+        header: "Type",
+    },
+    {
+        accessorKey: "school.name", 
+        header: "School",
+        cell: ({ row }) => {
+            const person = row.original;
+            return person.school ? person.school.name : "N/A";
+        }
+    },
+    {
+        accessorKey: "contactEmail",
+        header: "Contact Email",
+        cell: ({ row }) => {
+            const person = row.original;
+            return person.contactEmail || "-";
+        }
+    },
+    {
+        accessorKey: "user.email", 
+        header: "System User",
+        cell: ({ row }) => {
+            const person = row.original;
+            return person.user ? (
+                <span className="font-medium text-green-600">Yes ({person.user.email})</span>
+            ) : (
+                <span className="text-muted-foreground">No</span>
+            );
+        }
     },
     {
         id: "actions",
         cell: ({ row }) => {
-            const user = row.original; // The user object for the current row
+            const person = row.original;
             
             const handleDelete = async () => {
-                // Using window.confirm is generally discouraged in favor of custom dialogs
-                // for better UX and consistency, but keeping it as per existing pattern.
-                if (window.confirm(`Are you sure you want to delete user ${user.name}?`)) {
-                  const result = await deleteUserAction(user.id);
+                if (window.confirm(`Are you sure you want to delete ${person.firstName} ${person.lastName}? This will also delete their associated system user account (if any), student, employee, and guardian records.`)) {
+                  const result = await deletePersonAction(person.id);
                   if (result.success) {
                     toast.success(result.message);
                   } else {
@@ -56,8 +83,7 @@ export const getColumns = (
                 }
             };
 
-            // Only show the dropdown menu if the current user has either edit or delete permission
-            if (!canEditUser && !canDeleteUser) {
+            if (!canEditPerson && !canDeletePerson && !canGrantAccess) {
                 return null;
             }
 
@@ -71,23 +97,26 @@ export const getColumns = (
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        {/* Conditionally render Edit User menu item */}
-                        {canEditUser && (
-                            <DropdownMenuItem onClick={() => onEdit(user)}>
-                                Edit User
+                        {canEditPerson && (
+                            <DropdownMenuItem onClick={() => onEdit(person)}> {/* Pass person directly */}
+                                Edit Person
                             </DropdownMenuItem>
                         )}
-                        {/* Add separator only if both edit and delete actions are available */}
-                        {canEditUser && canDeleteUser && <DropdownMenuSeparator />}
-                        {/* Conditionally render Delete User menu item */}
-                        {canDeleteUser && (
+                        {/* Option to grant system access only if person doesn't have one and user has permission */}
+                        {canGrantAccess && !person.user && (
+                            <DropdownMenuItem onClick={() => onEdit(person)}> {/* Pass person directly */}
+                                Grant System Access
+                            </DropdownMenuItem>
+                        )}
+                        {(canEditPerson || (canGrantAccess && !person.user)) && canDeletePerson && <DropdownMenuSeparator />}
+                        {canDeletePerson && (
                             <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
-                                Delete User
+                                Delete Person
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>
-            )
+            );
         },
     },
-]
+];

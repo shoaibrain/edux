@@ -1,21 +1,25 @@
-import { getUsersWithRoles } from "@/lib/actions/user";
-import { getRoles } from "@/lib/actions/role";
-import { DataTable } from "./data-table";
 import { enforcePermission } from "@/lib/session";
+import { getPeople } from "@/lib/actions/person";
 
-export default async function UsersPage() {
-  await enforcePermission('user:read'); // Enforce permission to view users
+import { getRoles } from "@/lib/actions/role";
+import { getSchools } from "@/lib/actions/schools";
+import { PeopleDataTable } from "./data-table";
 
-  const [users, roles] = await Promise.all([
-    getUsersWithRoles(),
-    getRoles(),
+
+export default async function PeoplePage() {
+  await enforcePermission('person:read'); // Enforce permission to view people
+
+  const [people, schools, roles] = await Promise.all([
+    getPeople(),
+    getSchools(), // Fetch all schools to allow selection when adding a person
+    getRoles(),   // Fetch all roles to allow assignment when granting user access
   ]);
 
   return (
     <div className="space-y-4">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">Create, edit, and manage users in your organization.</p>
-        <DataTable data={users} allRoles={roles} />
+      <h1 className="text-2xl font-bold">People Management</h1>
+      <p className="text-muted-foreground">Manage all individuals (students, employees, guardians) in your organization.</p>
+      <PeopleDataTable data={people} allSchools={schools} allRoles={roles} />
     </div>
   );
 }

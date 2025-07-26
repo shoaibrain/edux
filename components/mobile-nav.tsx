@@ -9,6 +9,8 @@ import {
   Users,
   Folder,
   Settings,
+  DollarSign, 
+  Plug,       
 } from "lucide-react"
 import {
   Sheet,
@@ -17,8 +19,28 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/components/tenant-provider"; 
 
 export function MobileNav() {
+    const { user: currentUserSession } = useTenant(); 
+
+    const allNavItems = [
+        { title: "Dashboard", url: "/dashboard", icon: <Home className="h-5 w-5" />, requiredPermission: 'dashboard:view' },
+        { title: "People", url: "/dashboard/people", icon: <Users className="h-5 w-5" />, requiredPermission: 'person:read' }, // Updated permission to 'person:read'
+        { title: "Roles", url: "/dashboard/roles", icon: <Folder className="h-5 w-5" />, requiredPermission: 'role:read' },
+        { title: "Schools", url: "/dashboard/schools", icon: <Home className="h-5 w-5" />, requiredPermission: 'school:read' },
+        { title: "Billings", url: "/dashboard/billing", icon: <DollarSign className="h-5 w-5" />, requiredPermission: 'tenant:view_billing' },
+        { title: "Integrations", url: "/dashboard/integrations", icon: <Plug className="h-5 w-5" />, requiredPermission: 'tenant:manage' },
+        { title: "Settings", url: "/dashboard/settings", icon: <Settings className="h-5 w-5" />, requiredPermission: null },
+    ];
+
+    const navItems = allNavItems.filter(item => {
+        if (!item.requiredPermission) {
+            return true; 
+        }
+        return currentUserSession.permissions.includes(item.requiredPermission);
+    });
+
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -33,10 +55,11 @@ export function MobileNav() {
                   <Rocket className="h-5 w-5 transition-all group-hover:scale-110" />
                   <span className="sr-only">EduX</span>
                 </Link>
-                <MobileLink href="/dashboard" icon={<Home className="h-5 w-5" />}>Dashboard</MobileLink>
-                <MobileLink href="/dashboard/users" icon={<Users className="h-5 w-5" />}>Users</MobileLink>
-                <MobileLink href="/dashboard/roles" icon={<Folder className="h-5 w-5" />}>Roles</MobileLink>
-                <MobileLink href="/dashboard/settings" icon={<Settings className="h-5 w-5" />}>Settings</MobileLink>
+                {navItems.map(item => (
+                    <MobileLink key={item.url} href={item.url} icon={item.icon}>
+                        {item.title}
+                    </MobileLink>
+                ))}
               </nav>
             </SheetContent>
         </Sheet>

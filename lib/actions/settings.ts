@@ -3,18 +3,16 @@
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
-import log from '../logger';
-import { getSession } from '../session';
-import { getTenantDb } from '../db';
-import { users } from '../db/schema/tenant';
-import { UpdateProfileSchema, UpdatePasswordSchema } from '../dto/settings';
-import { logout } from './auth';
+import log from '@/lib/logger';
+import { getSession } from '@/lib/session';
+import { getTenantDb } from '@/lib/db';
+import { users, people } from '@/lib/db/schema/tenant';
+import { UpdateProfileSchema, UpdatePasswordSchema } from '@/lib/dto/settings';
+import { logout } from '@/lib/actions/auth';
 
 // Action to update the user's profile information
 export async function updateProfileAction(data: unknown) {
-    // No specific permission needed for a user to update their own profile
-    // However, if we were allowing admins to update *other* users, we'd add 'user:update' here.
-    const session = await getSession(); // Ensure user is authenticated
+    const session = await getSession();
     const db = await getTenantDb(session.tenantId);
 
     const validatedFields = UpdateProfileSchema.safeParse(data);
@@ -23,17 +21,30 @@ export async function updateProfileAction(data: unknown) {
         return { success: false, message: "Invalid data provided." };
     }
 
-    const { name, email } = validatedFields.data;
+    const { name, email } = validatedFields.data; // 'name' is from the form, will update person's firstName
 
     try {
-        await db.update(users)
-            .set({ name, email })
-            .where(eq(users.id, session.userId));
-        
+        await db.transaction(async (tx) => {
+            // Update user's email
+            await tx.update(users)
+                .set({ email })
+                .where(eq(users.id, session.userId));
+
+            // Update person's name (linked to user)
+            // First, find the user's associated personId
+            const user = await tx.query.users.findFirst({ where: eq(users.id, session.userId) });
+            if (user && user.personId) {
+                // Assuming 'name' in UpdateProfileSchema is the person's first name for simplicity.
+                // In a real application, you'd have separate firstName/lastName fields in the DTO.
+                await tx.update(people)
+                    .set({ firstName: name })
+                    .where(eq(people.id, user.personId));
+            } else {
+                log.warn({ userId: session.userId }, "User has no associated person record during profile update.");
+            }
+        });
+
         revalidatePath('/dashboard/settings');
-        // If user's name/email is part of the session token, you might need to re-issue it or update context
-        // For now, assume the session is re-fetched on subsequent requests or relevant UI updates.
-        // TODO: Need more details on this
         return { success: true, message: "Profile updated successfully." };
 
     } catch (error: unknown) {
@@ -48,8 +59,7 @@ export async function updateProfileAction(data: unknown) {
 
 // Action to update the user's password
 export async function updatePasswordAction(data: unknown) {
-    // No specific permission needed for a user to update their own password
-    const session = await getSession(); // Ensure user is authenticated
+    const session = await getSession();
     const db = await getTenantDb(session.tenantId);
 
     const validatedFields = UpdatePasswordSchema.safeParse(data);
@@ -77,8 +87,7 @@ export async function updatePasswordAction(data: unknown) {
         await db.update(users)
             .set({ password: hashedNewPassword })
             .where(eq(users.id, session.userId));
-        // TODO: After password update, what happens to user session, cookie JWT?
-        
+
         log.info({ userId: session.userId }, "Password updated successfully.");
         return { success: true, message: "Password updated successfully." };
 
@@ -90,18 +99,14 @@ export async function updatePasswordAction(data: unknown) {
 
 // Action to delete the user's own account
 export async function deleteAccountAction() {
-    // No specific permission needed for a user to delete their own account.
-    // This is a self-service action.
-    const session = await getSession(); // Ensure user is authenticated
+    const session = await getSession();
     const db = await getTenantDb(session.tenantId);
 
     try {
-        // TODO: set flag deleted
-        // TOOD: How to handle if user is deleting their own account?
-        // How to handle when tenant admin user is deleting their own account. DO NOT ALLOW THIS?
+        // Deleting the user account should NOT delete the person record.
+        // The person record might still be needed for historical data (e.g., student records).
         await db.delete(users).where(eq(users.id, session.userId));
         log.info({ userId: session.userId, tenantId: session.tenantId }, "User account deleted successfully.");
-        // After deletion, log the user out and redirect
         await logout();
         return { success: true, message: "Your account has been deleted." };
     } catch (error) {

@@ -1,5 +1,4 @@
-// lib/constants/rbac.ts
-// Define the default roles and their associated permissions
+// Define the default roles
 export const defaultRoles = [
   { name: 'TENANT_ADMIN', description: 'Full administrative access across the entire tenant.' },
   { name: 'SCHOOL_ADMIN', description: 'Administrative access within a specific school.' },
@@ -26,7 +25,7 @@ export const defaultPermissions = [
   { name: 'role:delete', description: 'Delete roles.' },
   { name: 'role:assign_permissions', description: 'Assign and revoke permissions for roles.' },
 
-  // School management permissions (Milestone 1)
+  // School management permissions
   { name: 'school:create', description: 'Create new schools.' },
   { name: 'school:read', description: 'View school details.' },
   { name: 'school:update', description: 'Update existing school details.' },
@@ -36,7 +35,7 @@ export const defaultPermissions = [
   { name: 'department:manage', description: 'Create, read, update, and delete departments.' },
   { name: 'grade_level:manage', description: 'Create, read, update, and delete grade levels.' },
 
-  // People Management Permissions (Milestone 2 - already defined for future)
+  // People Management Permissions
   { name: 'person:create', description: 'Create new people records (students, employees, guardians).' },
   { name: 'person:read', description: 'View people records.' },
   { name: 'person:update', description: 'Update existing people records.' },
@@ -44,7 +43,7 @@ export const defaultPermissions = [
   { name: 'student:admit', description: 'Admit new students and manage their records.' },
   { name: 'employee:onboard', description: 'Onboard new employees and manage their records.' },
   { name: 'guardian:manage', description: 'Manage guardian records and their association with students.' },
-  { name: 'user:grant_access', description: 'Grant system access to a person by creating a user account.' }, 
+  { name: 'user:grant_access', description: 'Grant system access to a person by creating a user account.' }, // New permission for linking Person to User
 
   // General dashboard view
   { name: 'dashboard:view', description: 'Access the main dashboard overview.' },
@@ -75,7 +74,7 @@ export const rolePermissionsMap: Record<string, string[]> = {
     'user:read', 
     'role:read', 
     'school:read', 
-    'person:read', 
+    'person:read', // Members can view people records
     'dashboard:view',
   ],
 };

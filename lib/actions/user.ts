@@ -1,33 +1,28 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { verify } from 'jsonwebtoken';
-import { env } from '@/env.mjs';
 import { getTenantDb } from '@/lib/db';
-import { UserFormSchema, type UserFormInput } from '@/lib/dto/user';
-import { users, usersToRoles, roles } from '@/lib/db/schema/tenant'; // Import roles for joining
+import { type UserFormInput } from '@/lib/dto/user'; 
+import { users, usersToRoles, roles, people } from '@/lib/db/schema/tenant'; 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import log from '../logger';
-import { enforcePermission, getSession, hasPermission, UserSession } from '../session'; // Import enforcePermission and UserSession
+import { enforcePermission, hasPermission, getSession } from '../session'; 
 
 function isDatabaseError(error: unknown): error is { code: string; message: string } {
     return typeof error === 'object' && error !== null && 'code' in error;
 }
 
-// The getSession function is now imported from lib/session directly.
-// No need to redefine it here.
-
 export async function getUsersWithRoles() {
-    await enforcePermission('user:read'); // Enforce permission to read users
+    await enforcePermission('user:read'); 
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
     
     try {
+        // Fetch users and eager load their associated person and roles
         const usersWithRoles = await db.query.users.findMany({
             with: {
+                person: true, // Load associated person data
                 usersToRoles: {
                     with: {
                         role: true
@@ -36,8 +31,10 @@ export async function getUsersWithRoles() {
             }
         });
 
+        // Map to a more consumable format, including person's name
         return usersWithRoles.map(user => ({
            ...user,
+            personName: user.person ? `${user.person.firstName} ${user.person.lastName}` : 'N/A',
             roles: user.usersToRoles.map(ur => ur.role.name).join(', ')
         }));
     } catch (error) {
@@ -46,14 +43,14 @@ export async function getUsersWithRoles() {
     }
 }
 
+// This action is now primarily for managing an existing user record (email, password, roles).
+// Direct creation of a user linked to a person should happen via upsertPersonAction.
 export async function upsertUserAction(data: UserFormInput) {
     const session = await getSession();
     
-    // Determine required permission based on whether it's a new user or update
-    const requiredPermission = data.id ? 'user:update' : 'user:create';
+    const requiredPermission = data.id ? 'user:update' : 'user:create'; 
     await enforcePermission(requiredPermission);
 
-    // Additionally, check if the user is attempting to assign roles without permission
     if (data.roles && data.roles.length > 0) {
         const canAssignRoles = await hasPermission('user:assign_roles');
         if (!canAssignRoles) {
@@ -64,13 +61,14 @@ export async function upsertUserAction(data: UserFormInput) {
 
     const db = await getTenantDb(session.tenantId);
 
-    const { id, name, email, password, roles: roleIdsStr } = data;
-    const roleIds = roleIdsStr.map(Number);
+    // Note: 'name' field is no longer part of 'users' table. It's on 'people'.
+    const { id, email, password, roles: roleIdsStr } = data; 
+    const roleIds = roleIdsStr ? roleIdsStr.map(Number) : []; 
     
     try {
         await db.transaction(async (tx) => {
             if (id) { // Update existing user
-                const userToUpdate: { name: string; email: string; password?: string } = { name, email };
+                const userToUpdate: { email: string; password?: string } = { email };
                 if (password) {
                     const hashedPassword = await bcrypt.hash(password, 12);
                     userToUpdate.password = hashedPassword;
@@ -83,30 +81,15 @@ export async function upsertUserAction(data: UserFormInput) {
                 if (roleIds.length > 0) {
                     await tx.insert(usersToRoles).values(roleIds.map(roleId => ({
                         userId: id,
-                        roleId: roleId
+                        roleId: roleId,
+                        // schoolId: ?? // Decide how schoolId for role assignment is handled here if roles are school-scoped.
                     })));
                 }
+                log.info({ userId: id, email, tenantId: session.tenantId }, 'User updated.');
 
-            } else { // Create new user
-                if (!password) {
-                    log.error({ tenantId: session.tenantId, email }, 'Password missing for new user creation.');
-                    throw new Error("Password is required for new users.");
-                }
-                
-                const hashedPassword = await bcrypt.hash(password, 12);
-                
-                const [newUser] = await tx.insert(users).values({
-                    name,
-                    email,
-                    password: hashedPassword,
-                }).returning({ id: users.id });
-
-                if (roleIds.length > 0) {
-                    await tx.insert(usersToRoles).values(roleIds.map(roleId => ({
-                        userId: newUser.id,
-                        roleId: roleId
-                    })));
-                }
+            } else { 
+                log.warn({ tenantId: session.tenantId, email }, 'Attempted to create user without personId via upsertUserAction. This flow should be deprecated.');
+                return { success: false, message: "User creation without a linked person is not allowed." };
             }
         });
     } catch (error: unknown) {
@@ -121,14 +104,13 @@ export async function upsertUserAction(data: UserFormInput) {
         return { success: false, message: "An unexpected error occurred while saving user." };
     }
 
-    revalidatePath('/dashboard/people');
-    // Revalidate roles page as well, in case a user's role assignment affects role display (e.g., role usage counts)
-    revalidatePath('/dashboard/roles'); 
+    revalidatePath('/dashboard/people'); 
+    revalidatePath('/dashboard/users'); 
     return { success: true, message: `User successfully ${id ? 'updated' : 'created'}.` };
 }
 
 export async function deleteUserAction(userId: number) {
-    await enforcePermission('user:delete'); // Enforce permission to delete users
+    await enforcePermission('user:delete'); 
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
 
@@ -138,8 +120,11 @@ export async function deleteUserAction(userId: number) {
     }
 
     try {
+        // Deleting a user does NOT delete the associated person record.
         await db.delete(users).where(eq(users.id, userId));
+        log.info({ userId, tenantId: session.tenantId }, 'User deleted.');
         revalidatePath('/dashboard/people');
+        revalidatePath('/dashboard/users'); 
         return { success: true, message: "User deleted successfully." };
     } catch (error) {
         log.error({ error, userId, tenantId: session.tenantId }, 'Failed to delete user');
