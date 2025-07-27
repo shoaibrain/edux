@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Replicating BrandingConfig structure from your v0 prototype school-form.ts
-const BrandingConfigSchema = z.object({
+
+export const BrandingConfigSchema = z.object({
   logo: z.object({
     url: z.string().url('Invalid URL for logo.').optional().nullable(),
     position: z.enum(["left", "center", "right"], { message: "Invalid logo position." }).optional(),
@@ -31,48 +31,59 @@ const BrandingConfigSchema = z.object({
   }),
 });
 
-// Replicating AcademicYear structure
-const AcademicYearSchema = z.object({
-  id: z.string().optional(), // Stepper uses string IDs for new items
-  yearName: z.string().min(1, "Year name is required."),
-  startDate: z.string().min(1, "Start date is required.").refine(dateString => !isNaN(new Date(dateString).getTime()), "Invalid start date."),
-  endDate: z.string().min(1, "End date is required.").refine(dateString => !isNaN(new Date(dateString).getTime()), "Invalid end date."),
-  isCurrent: z.boolean(),
-  terms: z.array(z.object({
+// EXPORT this schema
+export const AcademicTermSchema = z.object({
     id: z.string().optional(),
     termName: z.string().min(1, "Term name is required."),
     startDate: z.string().min(1, "Start date is required.").refine(dateString => !isNaN(new Date(dateString).getTime()), "Invalid term start date."),
     endDate: z.string().min(1, "End date is required.").refine(dateString => !isNaN(new Date(dateString).getTime()), "Invalid term end date."),
     isCurrent: z.boolean(),
-  })),
+});
+
+// EXPORT this schema
+export const AcademicYearSchema = z.object({
+  id: z.string().optional(), // Stepper uses string IDs for new items
+  yearName: z.string().min(1, "Year name is required."),
+  startDate: z.string().min(1, "Start date is required.").refine(dateString => !isNaN(new Date(dateString).getTime()), "Invalid start date."),
+  endDate: z.string().min(1, "End date is required.").refine(dateString => !isNaN(new Date(dateString).getTime()), "Invalid end date."),
+  isCurrent: z.boolean(),
+  terms: z.array(AcademicTermSchema).min(1, "At least one academic term is required."),
 }).refine(data => new Date(data.startDate) < new Date(data.endDate), {
   message: "Start date must be before end date for academic year.",
   path: ["endDate"],
 });
 
-// Replicating Department structure
-const DepartmentSchema = z.object({
+// EXPORT this schema
+export const DepartmentSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Department name is required."),
   description: z.string().optional(),
 });
 
-// Replicating GradeLevel structure
-const GradeLevelSchema = z.object({
+// EXPORT this schema
+export const GradeLevelSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Grade level name is required."),
   levelOrder: z.number().int().min(0, "Level order must be 0 or greater."),
   description: z.string().optional(),
 });
 
+// EXPORT this schema for the basic info step
+export const BasicInfoSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(3, { message: 'School name must be at least 3 characters.' }).max(100),
+  address: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  email: z.string().email({ message: 'Invalid email address.' }),
+});
 
 export const SchoolFormSchema = z.object({
-  id: z.number().optional(), // Add id for update mode
+  id: z.number().optional(),
   // Step 1: Basic Information
   name: z.string().min(3, { message: 'School name must be at least 3 characters.' }).max(100),
   address: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
-  email: z.string().email({ message: 'Invalid email address.' }), // Email is required in prototype
+  email: z.string().email({ message: 'Invalid email address.' }),
 
   // Step 2: Academic Information
   academicYears: z.array(AcademicYearSchema).min(1, "At least one academic year is required."),
@@ -86,7 +97,8 @@ export const SchoolFormSchema = z.object({
   // Step 5: Branding
   website: z.string().url({ message: 'Invalid URL.' }).optional().nullable(),
   logoUrl: z.string().url({ message: 'Invalid URL.' }).optional().nullable(),
-  branding: BrandingConfigSchema, // Directly use the Zod schema for BrandingConfig
+  // MAKE BRANDING OPTIONAL
+  branding: BrandingConfigSchema.optional(),
 });
 
 export type SchoolFormInput = z.infer<typeof SchoolFormSchema>;

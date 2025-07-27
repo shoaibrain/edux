@@ -8,18 +8,18 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, GraduationCap, ArrowUp, ArrowDown } from "lucide-react"
 import { GradeLevel, SchoolFormData } from "../types/school-forms"
 
-
 interface GradeLevelsFormProps {
   data: SchoolFormData
   updateData: (updates: Partial<SchoolFormData>) => void
-  errors: Record<string, string>
+  // FIX: Update the error type to match Zod's fieldErrors
+  errors: Record<string, string[] | undefined>
 }
 
 export function GradeLevelsForm({ data, updateData, errors }: GradeLevelsFormProps) {
   const addGradeLevel = () => {
-    const nextOrder = data.gradeLevels.length > 0 ? Math.max(...data.gradeLevels.map((g) => g.levelOrder), 0) + 1 : 1 // Start at 1 if no grades
+    const nextOrder = data.gradeLevels.length > 0 ? Math.max(...data.gradeLevels.map((g) => g.levelOrder), 0) + 1 : 1
     const newGrade: GradeLevel = {
-      id: Date.now().toString(), // Client-side unique ID
+      id: Date.now().toString(),
       name: "",
       levelOrder: nextOrder,
       description: "",
@@ -34,10 +34,9 @@ export function GradeLevelsForm({ data, updateData, errors }: GradeLevelsFormPro
 
   const removeGradeLevel = (gradeId: string) => {
     const updatedGrades = data.gradeLevels.filter((grade) => grade.id !== gradeId)
-    // Reorder remaining grades to maintain sequential order
     const reorderedGrades = updatedGrades
-      .sort((a, b) => a.levelOrder - b.levelOrder) // Sort by current order
-      .map((grade, index) => ({ ...grade, levelOrder: index + 1 })) // Assign new sequential order
+      .sort((a, b) => a.levelOrder - b.levelOrder)
+      .map((grade, index) => ({ ...grade, levelOrder: index + 1 }))
     updateData({ gradeLevels: reorderedGrades })
   }
 
@@ -54,16 +53,11 @@ export function GradeLevelsForm({ data, updateData, errors }: GradeLevelsFormPro
 
     const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
     const updatedGrades = [...sortedGrades]
-
-    // Swap positions
     ;[updatedGrades[currentIndex], updatedGrades[newIndex]] = [updatedGrades[newIndex], updatedGrades[currentIndex]]
-
-    // Update level orders
     const reorderedGrades = updatedGrades.map((grade, index) => ({
       ...grade,
       levelOrder: index + 1,
     }))
-
     updateData({ gradeLevels: reorderedGrades })
   }
 
@@ -92,7 +86,7 @@ export function GradeLevelsForm({ data, updateData, errors }: GradeLevelsFormPro
             <p className="text-gray-500 text-center">
               No grade levels defined yet.
               <br />
-              Click "Add Grade Level" to create your first grade.
+              Click Add Grade Level to create your first grade.
             </p>
           </CardContent>
         </Card>
@@ -143,7 +137,8 @@ export function GradeLevelsForm({ data, updateData, errors }: GradeLevelsFormPro
                     placeholder="Grade 1, Kindergarten, Senior Year..."
                     className={`mt-1 ${errors[`gradeLevels[${index}].name`] ? "border-red-500" : ""}`}
                   />
-                  {errors[`gradeLevels[${index}].name`] && <p className="mt-1 text-xs text-red-600">{errors[`gradeLevels[${index}].name`]}</p>}
+                  {/* FIX: Display the first error in the array */}
+                  {errors[`gradeLevels[${index}].name`] && <p className="mt-1 text-xs text-red-600">{errors[`gradeLevels[${index}].name`]?.[0]}</p>}
                 </div>
                 <div>
                   <Label htmlFor={`grade-order-${grade.id}`}>Level Order</Label>
@@ -155,14 +150,15 @@ export function GradeLevelsForm({ data, updateData, errors }: GradeLevelsFormPro
                     className={`mt-1 ${errors[`gradeLevels[${index}].levelOrder`] ? "border-red-500" : ""}`}
                     min="1"
                   />
-                  {errors[`gradeLevels[${index}].levelOrder`] && <p className="mt-1 text-xs text-red-600">{errors[`gradeLevels[${index}].levelOrder`]}</p>}
+                  {/* FIX: Display the first error in the array */}
+                  {errors[`gradeLevels[${index}].levelOrder`] && <p className="mt-1 text-xs text-red-600">{errors[`gradeLevels[${index}].levelOrder`]?.[0]}</p>}
                 </div>
               </div>
               <div>
                 <Label htmlFor={`grade-desc-${grade.id}`}>Description</Label>
                 <Textarea
                   id={`grade-desc-${grade.id}`}
-                  value={grade.description || ''} // Handle nullable
+                  value={grade.description || ''}
                   onChange={(e) => updateGradeLevel(grade.id!, { description: e.target.value })}
                   placeholder="Brief description of this grade level"
                   className="mt-1 min-h-[60px]"

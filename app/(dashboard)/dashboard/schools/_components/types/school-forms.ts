@@ -1,39 +1,39 @@
 export interface AcademicTerm {
-  id?: string; // Client-side generated ID for dynamic lists
+  id?: string;
   termName: string;
-  startDate: string; // Stored as YYYY-MM-DD string for input[type=date]
-  endDate: string; // Stored as YYYY-MM-DD string
+  startDate: string;
+  endDate: string;
   isCurrent: boolean;
 }
 
 export interface AcademicYear {
-  id?: string; // Client-side generated ID for dynamic lists
+  id?: string;
   yearName: string;
-  startDate: string; // Stored as YYYY-MM-DD string
-  endDate: string; // Stored as YYYY-MM-DD string
+  startDate: string;
+  endDate: string;
   isCurrent: boolean;
   terms: AcademicTerm[];
 }
 
 export interface Department {
-  id?: string; // Client-side generated ID for dynamic lists
+  id?: string;
   name: string;
-  description?: string; // Made optional as per Zod schema in lib/dto/school
+  description?: string;
 }
 
 export interface GradeLevel {
-  id?: string; // Client-side generated ID for dynamic lists
+  id?: string;
   name: string;
   levelOrder: number;
-  description?: string; // Made optional
+  description?: string;
 }
 
 export interface BrandingConfig {
-  logo?: { // Logo details for branding
+  logo?: {
     url?: string | null;
     position?: "left" | "center" | "right";
     size?: "small" | "medium" | "large";
-  } | null; // Can be null or undefined if no logo
+  } | null;
   colors: {
     primary: string;
     secondary: string;
@@ -59,24 +59,15 @@ export interface BrandingConfig {
 }
 
 export interface SchoolFormData {
-  id?: number; // Database ID, present in update mode
-  // Step 1: Basic Information
+  id?: number;
   name: string;
   address?: string | null;
   phone?: string | null;
-  email: string; // Required per prototype
-
-  // Step 2: Academic Information
+  email: string;
   academicYears: AcademicYear[];
-
-  // Step 3: Departments
   departments: Department[];
-
-  // Step 4: Grade Levels
   gradeLevels: GradeLevel[];
-
-  // Step 5: Branding
   website?: string | null;
   logoUrl?: string | null;
-  branding: BrandingConfig;
+  branding?: BrandingConfig;
 }

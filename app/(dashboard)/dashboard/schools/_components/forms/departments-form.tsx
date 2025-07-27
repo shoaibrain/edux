@@ -4,19 +4,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Trash2, Building, Calendar, BookOpen } from "lucide-react"
+import { Plus, Trash2, Building } from "lucide-react"
 import { Department, SchoolFormData } from "../types/school-forms"
 
 interface DepartmentsFormProps {
   data: SchoolFormData
   updateData: (updates: Partial<SchoolFormData>) => void
-  errors: Record<string, string>
+  // FIX: Update the error type to match Zod's fieldErrors
+  errors: Record<string, string[] | undefined>
 }
 
 export function DepartmentsForm({ data, updateData, errors }: DepartmentsFormProps) {
   const addDepartment = () => {
     const newDepartment: Department = {
-      id: Date.now().toString(), // Client-side unique ID
+      id: Date.now().toString(),
       name: "",
       description: "",
     }
@@ -56,7 +57,7 @@ export function DepartmentsForm({ data, updateData, errors }: DepartmentsFormPro
             <p className="text-gray-500 text-center">
               No departments defined yet.
               <br />
-              Click "Add Department" to create your first department.
+              Click Add Department to create your first department.
             </p>
           </CardContent>
         </Card>
@@ -81,7 +82,8 @@ export function DepartmentsForm({ data, updateData, errors }: DepartmentsFormPro
                     placeholder="Mathematics Department"
                     className={`mt-1 h-9 ${errors[`departments[${index}].name`] ? "border-red-500" : ""}`}
                   />
-                  {errors[`departments[${index}].name`] && <p className="mt-1 text-xs text-red-600">{errors[`departments[${index}].name`]}</p>}
+                  {/* FIX: Display the first error in the array */}
+                  {errors[`departments[${index}].name`] && <p className="mt-1 text-xs text-red-600">{errors[`departments[${index}].name`]?.[0]}</p>}
                 </div>
                 <div>
                   <Label htmlFor={`dept-desc-${department.id}`} className="text-sm font-medium text-gray-700">
@@ -89,7 +91,7 @@ export function DepartmentsForm({ data, updateData, errors }: DepartmentsFormPro
                   </Label>
                   <Input
                     id={`dept-desc-${department.id}`}
-                    value={department.description || ''} // Handle nullable
+                    value={department.description || ''}
                     onChange={(e) => updateDepartment(department.id!, { description: e.target.value })}
                     placeholder="Brief description..."
                     className="mt-1 h-9"

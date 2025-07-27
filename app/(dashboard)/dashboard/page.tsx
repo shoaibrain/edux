@@ -1,4 +1,4 @@
-import { getSession, enforcePermission } from "@/lib/session"; // Import enforcePermission
+import { getSession, enforcePermission } from "@/lib/session";
 import { getTenantDb } from "@/lib/db";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Folder, Building, UserCircle } from "lucide-react";

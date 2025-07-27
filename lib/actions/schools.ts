@@ -2,188 +2,250 @@
 
 import { getTenantDb } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import log from '../logger';
 import { enforcePermission, getSession } from '../session';
-import { 
-    schools, academicYears, academicTerms, departments, gradeLevels 
-} from '../db/schema/tenant'; // Import all relevant schemas
-import { SchoolFormSchema, type SchoolFormInput } from '@/lib/dto/school'; 
+import {
+    schools,
+    academicYears,
+    academicTerms,
+    departments,
+    gradeLevels,
+} from '../db/schema/tenant';
+import {
+    AcademicTermSchema,
+    AcademicYearSchema,
+    BasicInfoSchema,
+    DepartmentSchema,
+    GradeLevelSchema,
+} from '@/lib/dto/school';
+import { SchoolFormData } from '@/app/(dashboard)/dashboard/schools/_components/types/school-forms';
+import z from 'zod';
+
+// Define a reusable type for action results
+type ActionResult = {
+    success: boolean;
+    message: string;
+    errors?: Record<string, string[] | undefined>;
+};
+
+type BasicInfoActionResult = {
+    success: boolean;
+    message: string;
+    errors?: Record<string, string[] | undefined>;
+    school?: typeof schools.$inferSelect;
+}
 
 function isDatabaseError(error: unknown): error is { code: string; message: string } {
     return typeof error === 'object' && error !== null && 'code' in error;
 }
 
+// RE-ADD `getSchools` for the main data table
 export async function getSchools() {
     await enforcePermission('school:read');
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
-    
-    try {
-        const result = await db.query.schools.findMany({
-            with: { // Eager load relations for comprehensive school data retrieval
-                academicYears: { with: { academicTerms: true } },
-                departments: true,
-                gradeLevels: true,
-            }
-        });
-        // Convert brandingJson back to BrandingConfig structure for UI consumption
-        return result.map(school => ({
-            ...school,
-            // Parse brandingJson back to a structured object if it exists
-            branding: school.brandingJson ? school.brandingJson as SchoolFormInput['branding'] : {
-                // Provide default BrandingConfig if brandingJson is null
-                colors: { primary: "#0ea5e9", secondary: "#0284c7", accent: "#38bdf8", background: "#ffffff", text: "#1f2937" },
-                typography: { headingFont: "Inter, sans-serif", bodyFont: "Inter, sans-serif", fontSize: "medium" },
-                theme: { mode: "light", borderRadius: "medium", shadows: true },
-                layout: { sidebarPosition: "left", headerStyle: "standard", cardStyle: "elevated" },
-            },
-        }));
-    } catch (error) {
-        log.error({ error, tenantId: session.tenantId }, 'Failed to fetch schools.');
-        throw new Error('Failed to retrieve schools.');
-    }
+    return db.query.schools.findMany();
 }
 
-export async function upsertSchoolAction(data: SchoolFormInput) {
+export async function getSchoolById(id: number): Promise<SchoolFormData | null> {
+    // ... (implementation remains the same, but let's fix the type mappings)
+    await enforcePermission('school:read');
     const session = await getSession();
-    
-    const validatedFields = SchoolFormSchema.safeParse(data);
+    const db = await getTenantDb(session.tenantId);
+
+    const school = await db.query.schools.findFirst({
+        where: eq(schools.id, id),
+        with: {
+            academicYears: { with: { academicTerms: true } },
+            departments: true,
+            gradeLevels: true,
+        },
+    });
+
+    if (!school) return null;
+
+    return {
+        ...school,
+        email: school.email || '',
+        academicYears: school.academicYears.map(ay => ({
+            ...ay,
+            id: ay.id.toString(),
+            startDate: ay.startDate || '',
+            endDate: ay.endDate || '',
+            terms: ay.academicTerms.map(at => ({
+                ...at,
+                id: at.id.toString(),
+                startDate: at.startDate || '',
+                endDate: at.endDate || '',
+            })),
+        })),
+        // FIX type mismatch by handling null
+        departments: school.departments.map(d => ({ ...d, id: d.id.toString(), description: d.description || undefined })),
+        gradeLevels: school.gradeLevels.map(gl => ({...gl, id: gl.id.toString(), description: gl.description || undefined })),
+        // Make branding optional
+        branding: school.brandingJson ? JSON.parse(school.brandingJson as string) : undefined,
+    };
+}
+export async function upsertSchoolBasicInfo(data: z.infer<typeof BasicInfoSchema>): Promise<BasicInfoActionResult> {
+    const session = await getSession();
+    const validatedFields = BasicInfoSchema.safeParse(data);
 
     if (!validatedFields.success) {
-        log.warn({ errors: validatedFields.error.flatten(), data }, 'Invalid school data provided for upsert.');
-        return { success: false, message: 'Invalid school data.' };
+        return { success: false, message: 'Invalid data provided.', errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { 
-        id, name, address, phone, email, website, logoUrl, branding, 
-        academicYears: formAcademicYears, departments: formDepartments, gradeLevels: formGradeLevels
-    } = validatedFields.data;
-    
+    const { id, ...schoolData } = validatedFields.data;
     const requiredPermission = id ? 'school:update' : 'school:create';
     await enforcePermission(requiredPermission);
-
     const db = await getTenantDb(session.tenantId);
 
     try {
-        let schoolId: number;
+        if (id) {
+            const [updatedSchool] = await db.update(schools).set({ ...schoolData, updatedAt: new Date() }).where(eq(schools.id, id)).returning();
+            revalidatePath(`/dashboard/schools`);
+            return { success: true, message: 'Basic information updated.', school: updatedSchool };
+        } else {
+            const [newSchool] = await db.insert(schools).values(schoolData).returning();
+            revalidatePath('/dashboard/schools');
+            return { success: true, message: 'School created successfully.', school: newSchool };
+        }
+    } catch (error) {
+        log.error({ error, data }, 'Failed to upsert school basic info.');
+        if (isDatabaseError(error) && error.code === '23505') {
+            return { success: false, message: "A school with this name already exists.", errors: { name: ["This name is already in use."] } };
+        }
+        return { success: false, message: "An unexpected server error occurred." };
+    }
+}
+const formatZodArrayErrors = (error: z.ZodError): Record<string, string[] | undefined> => {
+    const formattedErrors: Record<string, string[] | undefined> = {};
+    error.issues.forEach(issue => {
+        const path = issue.path.join('.'); // e.g., "0.name" or "2.terms.0.startDate"
+        if (!formattedErrors[path]) {
+            formattedErrors[path] = [];
+        }
+        formattedErrors[path]?.push(issue.message);
+    });
+    return formattedErrors;
+};
+
+export async function upsertAcademicYears(schoolId: number, academicYearsData: z.infer<typeof AcademicYearSchema>[]): Promise<ActionResult> {
+    const session = await getSession();
+    await enforcePermission('school:update');
+    const db = await getTenantDb(session.tenantId);
+
+    const validation = z.array(AcademicYearSchema).safeParse(academicYearsData);
+     if (!validation.success) {
+        // FIX: Use the new error formatter to ensure the return type matches ActionResult
+        return { success: false, message: 'Invalid academic year data.', errors: formatZodArrayErrors(validation.error) };
+    }
+
+    try {
         await db.transaction(async (tx) => {
-            // Convert BrandingConfig object to JSONB string for database storage
-            const brandingJsonData = JSON.stringify(branding); 
-
-            if (id) { // Update existing school
-                await tx.update(schools).set({
-                    name,
-                    address,
-                    phone,
-                    email,
-                    website,
-                    logoUrl,
-                    brandingJson: brandingJsonData as any, // Cast to any to satisfy jsonb type (Drizzle limitation)
-                    updatedAt: new Date(),
-                }).where(eq(schools.id, id));
-                schoolId = id;
-                log.info({ schoolId: id, name, tenantId: session.tenantId }, 'School updated.');
-            } else { // Create new school
-                const [newSchool] = await tx.insert(schools).values({
-                    name,
-                    address,
-                    phone,
-                    email,
-                    website,
-                    logoUrl,
-                    brandingJson: brandingJsonData as any, // Cast to any to satisfy jsonb type
-                }).returning({ id: schools.id });
-                schoolId = newSchool.id;
-                log.info({ name, tenantId: session.tenantId }, 'School created.');
+            const existingYears = await tx.query.academicYears.findMany({ where: eq(academicYears.schoolId, schoolId), columns: { id: true } });
+            if (existingYears.length > 0) {
+                await tx.delete(academicTerms).where(inArray(academicTerms.academicYearId, existingYears.map(y => y.id)));
             }
+            await tx.delete(academicYears).where(eq(academicYears.schoolId, schoolId));
 
-            // --- Handle Academic Years, Terms, Departments, Grade Levels ---
-            // For updates, you would typically delete existing and re-insert or compare and update.
-            // For simplicity in this first iteration, we'll re-insert or create.
-            // A more robust approach involves diffing and updating existing records.
-
-            // Clear existing academic data if updating
-            if (id) {
-                await tx.delete(academicTerms).where(eq(academicTerms.academicYearId, db.query.academicYears.id)); // Need proper join
-                await tx.delete(academicYears).where(eq(academicYears.schoolId, schoolId));
-                await tx.delete(departments).where(eq(departments.schoolId, schoolId));
-                await tx.delete(gradeLevels).where(eq(gradeLevels.schoolId, schoolId));
-            }
-
-
-            // Insert Academic Years and Terms
-            for (const yearData of formAcademicYears) {
+            for (const yearData of validation.data) {
                 const [newYear] = await tx.insert(academicYears).values({
                     schoolId,
                     yearName: yearData.yearName,
-                    startDate: new Date(yearData.startDate),
-                    endDate: new Date(yearData.endDate),
+                    startDate: yearData.startDate,
+                    endDate: yearData.endDate,
                     isCurrent: yearData.isCurrent,
                 }).returning({ id: academicYears.id });
 
-                for (const termData of yearData.terms) {
-                    await tx.insert(academicTerms).values({
+                if (yearData.terms?.length) {
+                    await tx.insert(academicTerms).values(yearData.terms.map((term: z.infer<typeof AcademicTermSchema>) => ({
                         academicYearId: newYear.id,
-                        termName: termData.termName,
-                        startDate: new Date(termData.startDate),
-                        endDate: new Date(termData.endDate),
-                        isCurrent: termData.isCurrent,
-                    });
+                        termName: term.termName,
+                        startDate: term.startDate,
+                        endDate: term.endDate,
+                        isCurrent: term.isCurrent,
+                    })));
                 }
             }
-
-            // Insert Departments
-            await tx.insert(departments).values(formDepartments.map(dept => ({
-                schoolId,
-                name: dept.name,
-                description: dept.description,
-            })));
-
-            // Insert Grade Levels
-            await tx.insert(gradeLevels).values(formGradeLevels.map(grade => ({
-                schoolId,
-                name: grade.name,
-                levelOrder: grade.levelOrder,
-                description: grade.description,
-            })));
-
-        }); // End transaction
-
-    } catch (error: unknown) {
-        log.error({ error, tenantId: session.tenantId, userId: session.userId, data }, 'Failed to upsert school');
-        if (isDatabaseError(error) && error.code === '23505') { // Unique constraint violation
-            if (error.message.includes('schools_name_unique')) {
-                return { success: false, message: "A school with this name already exists.", errors: { name: ["This school name is already in use."] } };
-            }
-            if (error.message.includes('academic_years_unq_school_year')) {
-                return { success: false, message: "An academic year with this name already exists for this school.", errors: { academicYears: ["Duplicate academic year name."] } };
-            }
-            if (error.message.includes('academic_terms_unq_year_term')) {
-                return { success: false, message: "An academic term with this name already exists for this year.", errors: { academicYears: ["Duplicate academic term name within a year."] } };
-            }
-            if (error.message.includes('departments_unq_school_dept')) {
-                return { success: false, message: "A department with this name already exists for this school.", errors: { departments: ["Duplicate department name."] } };
-            }
-            if (error.message.includes('grade_levels_unq_school_grade') || error.message.includes('grade_levels_unq_school_order')) {
-                return { success: false, message: "A grade level with this name or order already exists for this school.", errors: { gradeLevels: ["Duplicate grade level name or order."] } };
-            }
-        }
-        return { success: false, message: "An unexpected error occurred while saving school." };
+        });
+        revalidatePath(`/dashboard/schools/onboard/${schoolId}`);
+        return { success: true, message: 'Academic information saved.' };
+    } catch (error) {
+        log.error({ error, schoolId }, 'Failed to upsert academic years.');
+        return { success: false, message: 'An unexpected server error occurred.' };
     }
-
-    revalidatePath('/dashboard/schools');
-    return { success: true, message: `School successfully ${id ? 'updated' : 'created'}.` };
 }
 
+export async function upsertDepartments(schoolId: number, departmentsData: z.infer<typeof DepartmentSchema>[]): Promise<ActionResult> {
+    const session = await getSession();
+    await enforcePermission('school:update');
+    const db = await getTenantDb(session.tenantId);
+
+    const validation = z.array(DepartmentSchema).safeParse(departmentsData);
+    if (!validation.success) {
+        // FIX: Use the new error formatter
+        return { success: false, message: 'Invalid department data.', errors: formatZodArrayErrors(validation.error) };
+    }
+
+    try {
+        await db.transaction(async (tx) => {
+            await tx.delete(departments).where(eq(departments.schoolId, schoolId));
+            if (validation.data.length > 0) {
+                await tx.insert(departments).values(validation.data.map(dept => ({
+                    schoolId,
+                    name: dept.name,
+                    description: dept.description,
+                })));
+            }
+        });
+        revalidatePath(`/dashboard/schools/onboard/${schoolId}`);
+        return { success: true, message: 'Departments saved.' };
+    } catch (error) {
+        log.error({ error, schoolId }, 'Failed to upsert departments.');
+        return { success: false, message: 'An unexpected server error occurred.' };
+    }
+}
+
+export async function upsertGradeLevels(schoolId: number, gradeLevelsData: z.infer<typeof GradeLevelSchema>[]): Promise<ActionResult> {
+    const session = await getSession();
+    await enforcePermission('school:update');
+    const db = await getTenantDb(session.tenantId);
+
+    const validation = z.array(GradeLevelSchema).safeParse(gradeLevelsData);
+    if (!validation.success) {
+        // FIX: Use the new error formatter
+        return { success: false, message: 'Invalid grade level data.', errors: formatZodArrayErrors(validation.error) };
+    }
+
+    try {
+        await db.transaction(async (tx) => {
+            await tx.delete(gradeLevels).where(eq(gradeLevels.schoolId, schoolId));
+            if (validation.data.length > 0) {
+                await tx.insert(gradeLevels).values(validation.data.map(grade => ({
+                    schoolId,
+                    name: grade.name,
+                    levelOrder: grade.levelOrder,
+                    description: grade.description,
+                })));
+            }
+        });
+        revalidatePath(`/dashboard/schools/onboard/${schoolId}`);
+        return { success: true, message: 'Grade levels saved.' };
+    } catch (error) {
+        log.error({ error, schoolId }, 'Failed to upsert grade levels.');
+        return { success: false, message: 'An unexpected server error occurred.' };
+    }
+}
+
+
+// RE-ADD `deleteSchoolAction` for the data table
 export async function deleteSchoolAction(schoolId: number) {
     await enforcePermission('school:delete');
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
 
     try {
-        // Deleting a school will cascade delete its academic years, terms, departments, grade levels,
-        // and potentially related usersToRoles entries.
         await db.delete(schools).where(eq(schools.id, schoolId));
         log.info({ schoolId, tenantId: session.tenantId }, 'School deleted.');
         revalidatePath('/dashboard/schools');
