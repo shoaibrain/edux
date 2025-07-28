@@ -23,6 +23,16 @@ export async function POST(request: NextRequest) {
 
     log.info({ tenantId }, '[API] Tenant creation request received.');
 
+    // Check if tenantId already exists
+    const existingTenant = await mainDb.query.tenants.findFirst({
+      where: eq(tenants.tenantId, tenantId),
+    });
+
+    if (existingTenant) {
+      log.warn({ tenantId }, '[API] Tenant creation failed: Tenant ID already exists.');
+      return NextResponse.json({ error: 'This subdomain is already taken. Please choose another.' }, { status: 409 });
+    }
+
     // 1. Create the new database project on Neon
     const neonProject = await createNeonProject(tenantId);
     if (!neonProject || !neonProject.projectId || !neonProject.connectionString) {
@@ -52,13 +62,12 @@ export async function POST(request: NextRequest) {
     log.info({ tenantId }, '[API] Default tenant data seeded.');
 
     // 5. Create the tenant's first admin PERSON in their new database
-    // schoolId is now nullable in tenant.ts, so assigning null is allowed here
     const [newAdminPerson] = await tenantDb.insert(tenantSchema.people).values({
-      schoolId: null, // Tenant admin person is not yet associated with a school.
+      schoolId: null,
       firstName: adminName.split(' ')[0] || adminName,
       lastName: adminName.split(' ')[1] || '',
       contactEmail: adminEmail,
-      personType: 'staff', // Using 'staff' as per personTypeEnum
+      personType: 'staff',
     }).returning({ id: tenantSchema.people.id });
     log.info({ tenantId, adminEmail, personId: newAdminPerson.id }, '[API] Admin person created in tenant DB.');
 

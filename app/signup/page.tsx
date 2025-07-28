@@ -7,10 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import Link from 'next/link'; // Import Link for navigation
+import Link from 'next/link';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { rootDomain, protocol } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 export default function SignupPage() {
-  const [message, setMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const form = useForm<TenantSignupInput>({
     resolver: zodResolver(TenantSignupDto),
     defaultValues: {
@@ -22,8 +26,9 @@ export default function SignupPage() {
     },
   });
 
+  const { isSubmitting, errors } = form.formState;
+
   const onSubmit = async (data: TenantSignupInput) => {
-    setMessage(''); // Clear previous messages
     try {
       const res = await fetch('/api/tenants', {
         method: 'POST',
@@ -33,18 +38,17 @@ export default function SignupPage() {
       const result = await res.json();
       if (res.ok) {
         toast.success(`Tenant "${data.orgName}" created successfully! Redirecting...`);
-        // Redirect to the new tenant's dashboard
-        // Note: In a production environment, you might want a more robust redirect
-        // that handles dynamic subdomains or custom domains.
-        window.location.href = `http://${data.tenantId}.localhost:3000/dashboard`;
+        window.location.href = `${protocol}://${data.tenantId}.${rootDomain}/login`;
       } else {
-        setMessage(result.error || 'Error creating tenant');
         toast.error(result.error || 'Error creating tenant');
-        // If there are specific validation errors from the backend, set them on the form
-        if (result.details) {
+        if (res.status === 409) {
+          form.setError('tenantId', {
+            type: 'server',
+            message: result.error,
+          });
+        } else if (result.details) {
           result.details.issues.forEach((issue: { path: (string | number)[]; message: string; }) => {
             if (issue.path && issue.path.length > 0) {
-              // Assuming path[0] is the field name (e.g., 'tenantId')
               form.setError(issue.path[0] as keyof TenantSignupInput, {
                 type: 'server',
                 message: issue.message,
@@ -55,95 +59,117 @@ export default function SignupPage() {
       }
     } catch (error) {
       console.error('Signup request failed:', error);
-      setMessage('An unexpected error occurred. Please try again.');
       toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center text-white">Tenant Signup</h1>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="orgName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-300">Organization Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., EduX Academy" {...field} className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="tenantId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-300">Tenant ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., edux-academy (lowercase, no spaces)" {...field} className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="adminName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-300">Admin Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., John Doe" {...field} className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="adminEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-300">Admin Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="e.g., admin@example.com" {...field} className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="adminPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-300">Admin Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Minimum 8 characters" {...field} className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
-              disabled={form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? 'Creating Tenant...' : 'Sign Up'}
-            </Button>
-            {message && <p className="mt-4 text-center text-red-400">{message}</p>}
-          </form>
-        </Form>
-        <p className="mt-6 text-center text-gray-400">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create your School</h1>
+          <p className="text-gray-500 dark:text-gray-400">Start your 14-day free trial today.</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="orgName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organization Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., EduX Academy" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="tenantId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subdomain</FormLabel>
+                    <div className="flex items-center">
+                      <FormControl>
+                        <Input 
+                          placeholder="your-school" 
+                          {...field} 
+                          className={cn("rounded-r-none", errors.tenantId && "border-red-500 focus-visible:ring-red-500")}
+                        />
+                      </FormControl>
+                      <span className={cn("inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm h-10", errors.tenantId && "border-red-500")}>
+                        .{rootDomain}
+                      </span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="adminName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="adminEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="e.g., admin@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="adminPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input type={showPassword ? 'text' : 'password'} placeholder="Minimum 8 characters" {...field} />
+                      </FormControl>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              </Button>
+            </form>
+          </Form>
+        </div>
+        <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-400 hover:underline">
+          <Link href="/login" className="font-medium text-blue-600 hover:underline dark:text-blue-500">
             Log in
           </Link>
         </p>

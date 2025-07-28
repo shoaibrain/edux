@@ -11,7 +11,7 @@ import { Breadcrumb } from "@/components/ui/breadcrumb"
 import log from "@/lib/logger"
 import { TenantContextType, TenantProvider } from "@/components/tenant-provider"
 import { MobileNav } from "@/components/mobile-nav"
-import { NavUser } from "@/components/user-nav" // Import NavUser
+import { NavUser } from "@/components/user-nav"
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -42,14 +42,12 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
       <SidebarInset>
          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/80 px-4 backdrop-blur-lg sm:px-6">
           <div className="flex items-center gap-2">
-            {/* The desktop SidebarTrigger has been moved to AppSidebar */}
             <Separator orientation="vertical" className="mr-2 h-4 hidden md:flex" />
             <Breadcrumb />
              <MobileNav />
           </div>
           <div className="flex items-center gap-4">
-              {/* ThemeToggle is now inside NavUser */}
-              <NavUser user={user} /> {/* NavUser is positioned here */}
+              <NavUser user={user} />
           </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
