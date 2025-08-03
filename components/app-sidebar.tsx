@@ -83,7 +83,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className="p-2 hidden md:block">
-
         <SidebarTrigger
           className={cn(
             buttonVariants({ variant: "ghost", size: "default" }),
