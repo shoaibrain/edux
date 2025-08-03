@@ -1,12 +1,11 @@
 import { Separator } from "@/components/ui/separator";
-import UpdateProfileForm from "./_components/update-profile-form"; // Corrected to default import
+import UpdateProfileForm from "./_components/update-profile-form";
 import { UpdatePasswordForm } from "./_components/update-password-form";
 import { DeleteAccountForm } from "./_components/delete-account-form";
-import { getSession } from "@/lib/session"; // Import getSession
+import { getSession } from "@/lib/session";
 
-export default async function SettingsPage() { // Make it async to fetch session
-  const session = await getSession(); // Fetch current user session
-  // You can pass the user object to UpdateProfileForm if needed, e.g., to pre-fill fields
+export default async function SettingsPage() {
+  const session = await getSession();
   const currentUser = session; 
 
   return (

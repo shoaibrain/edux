@@ -27,6 +27,16 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const { state: sidebarState } = useSidebar(true);
   const { user: currentUserSession } = useTenant();
+  console.debug("[AppSidebar] Sidebar state:", sidebarState);
+  const canViewSchools = currentUserSession.permissions.includes('school:read');
+  const canCreateSchool = currentUserSession.permissions.includes('school:create');
+  const canEditSchool = currentUserSession.permissions.includes('school:update');
+
+  const canViewBilling = currentUserSession.permissions.includes('tenant:view_billing');
+  const canViewPeople = currentUserSession.permissions.includes('person:read');
+
+  console.log("[AppSidebar] Current user session:", currentUserSession);
+    console.debug("[AppSidebar] User permissions:", currentUserSession?.permissions);
 
   const allNavItems = [
     { title: "Dashboard", url: "/dashboard", iconName: "Home" as const, requiredPermission: 'dashboard:view' },
@@ -37,13 +47,16 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
     { title: "Integrations", url: "/dashboard/integrations", iconName: "Plug" as const, requiredPermission: 'tenant:manage' },
     { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const, requiredPermission: null },
   ];
+   console.debug("[AppSidebar] All nav items:", allNavItems);
 
   const navItems = allNavItems.filter(item => {
     if (!item.requiredPermission) {
       return true;
     }
-    return currentUserSession.permissions.includes(item.requiredPermission);
+    return currentUserSession?.permissions?.includes(item.requiredPermission);
   });
+
+  console.log("[AppSidebar] Filtered nav items:", navItems);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -70,6 +83,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className="p-2 hidden md:block">
+
         <SidebarTrigger
           className={cn(
             buttonVariants({ variant: "ghost", size: "default" }),

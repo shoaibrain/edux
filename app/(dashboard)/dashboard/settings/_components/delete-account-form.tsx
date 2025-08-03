@@ -19,7 +19,6 @@ export function DeleteAccountForm() {
   });
 
   const onSubmit = async () => {
-    // A native confirm dialog is a good extra layer of protection here.
     if (window.confirm("Are you absolutely sure you want to delete your account? This action cannot be undone.")) {
         const result = await deleteAccountAction();
         if (result.success) {

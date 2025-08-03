@@ -19,7 +19,7 @@ import {
     DepartmentSchema,
     GradeLevelSchema,
 } from '@/lib/dto/school';
-import { SchoolFormData } from '@/app/(dashboard)/dashboard/schools/_components/types/school-forms';
+import { SchoolFormData } from '@/app/(dashboard)/dashboard/(schools)/schools/_components/types/school-forms';
 import z from 'zod';
 
 // Define a reusable type for action results
@@ -137,7 +137,6 @@ export async function upsertAcademicYears(schoolId: number, academicYearsData: z
 
     const validation = z.array(AcademicYearSchema).safeParse(academicYearsData);
      if (!validation.success) {
-        // FIX: Use the new error formatter to ensure the return type matches ActionResult
         return { success: false, message: 'Invalid academic year data.', errors: formatZodArrayErrors(validation.error) };
     }
 
