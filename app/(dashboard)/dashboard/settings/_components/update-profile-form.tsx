@@ -9,18 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UpdateProfileSchema, UpdateProfileInput } from "@/lib/dto/settings";
 import { updateProfileAction } from "@/lib/actions/settings";
-import { UserSession } from "@/lib/session"; // Import UserSession type
+import { UserSession } from "@/lib/session";
 
 interface UpdateProfileFormProps {
-  user: UserSession; // Accept user prop
+  user: UserSession;
 }
 
-export default function UpdateProfileForm({ user }: UpdateProfileFormProps) { // Change to default export and accept props
+export default function UpdateProfileForm({ user }: UpdateProfileFormProps) {
   const form = useForm<UpdateProfileInput>({
     resolver: zodResolver(UpdateProfileSchema),
     defaultValues: {
-      name: user.name, // Pre-fill with current user's name from session
-      email: user.email, // Pre-fill with current user's email from session
+      name: user.name,
+      email: user.email,
     },
   });
 

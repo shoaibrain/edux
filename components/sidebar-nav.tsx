@@ -11,20 +11,19 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-// The icon map now includes all necessary icons
 const iconMap: { [key: string]: LucideIcon } = {
   Home,
   Users,
   Folder,
   Settings,
-  DollarSign, // Added missing icon
-  Plug,       // Added missing icon
+  DollarSign,
+  Plug,
 };
 
 interface NavItem {
   title: string;
   url: string;
-  iconName: keyof typeof iconMap; // This type correctly enforces valid icon names
+  iconName: keyof typeof iconMap;
 }
 
 interface MainNavProps {
@@ -37,7 +36,7 @@ export function MainNav({ items }: MainNavProps) {
   return (
     <SidebarMenu>
       {items.map((item) => {
-        const Icon = iconMap[item.iconName]; // Icon will now be correctly resolved
+        const Icon = iconMap[item.iconName];
         return (
           <SidebarMenuItem key={item.url}>
             <SidebarMenuButton
@@ -46,7 +45,7 @@ export function MainNav({ items }: MainNavProps) {
               tooltip={item.title}
             >
               <Link href={item.url}>
-                <Icon /> {/* This will now be a valid React component */}
+                <Icon />
                 <span>{item.title}</span>
               </Link>
             </SidebarMenuButton>

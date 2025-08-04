@@ -18,7 +18,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     const host = window.location.host;
+    console.log('Current host:', host);
     const parts = host.split('.');
+    console.log('Host parts:', parts);
     if (parts.length > 2 || (parts.length === 2 && parts[1] !== 'localhost:3000')) {
       setTenantId(parts[0]);
     }
@@ -63,7 +65,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

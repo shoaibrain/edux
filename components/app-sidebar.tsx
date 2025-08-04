@@ -5,7 +5,7 @@ import { Rocket, DollarSign, Plug, Home, Users, Folder, Settings, PanelLeft } fr
 
 import { type UserSession } from "@/lib/session"
 import { useTenant } from "@/components/tenant-provider"
-import { MainNav } from "./main-nav"
+import { MainNav } from "./sidebar-nav"
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +23,11 @@ import { buttonVariants } from "@/components/ui/button"
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user: UserSession;
 }
-
+/**
+ * @param param0 - The user session object containing user permissions and details.
+ * @param props - Additional props for the sidebar component.
+ * @returns  - A sidebar component that displays navigation items based on user permissions.
+ */
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const { state: sidebarState } = useSidebar(true);
   const { user: currentUserSession } = useTenant();
@@ -31,7 +35,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const canViewSchools = currentUserSession.permissions.includes('school:read');
   const canCreateSchool = currentUserSession.permissions.includes('school:create');
   const canEditSchool = currentUserSession.permissions.includes('school:update');
-
+  const canManageIntegrations = currentUserSession.permissions.includes('tenant:manage');
+  const canManageRoles = currentUserSession.permissions.includes('role:manage');
+  const canManageUsers = currentUserSession.permissions.includes('user:manage');
+  const canManageSettings = currentUserSession.permissions.includes('tenant:manage_settings');
+  
   const canViewBilling = currentUserSession.permissions.includes('tenant:view_billing');
   const canViewPeople = currentUserSession.permissions.includes('person:read');
 

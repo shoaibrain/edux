@@ -1,4 +1,3 @@
-// components/tenant-provider.tsx
 "use client";
 
 import { createContext, useContext, ReactNode } from 'react';

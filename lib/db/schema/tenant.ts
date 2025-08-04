@@ -270,7 +270,6 @@ export const gradeLevelsRelations = relations(gradeLevels, ({ one, many }) => ({
     students: many(students),
 }));
 
-// New relations for Milestone 2 tables
 export const peopleRelations = relations(people, ({ one, many }) => ({
     school: one(schools, {
         fields: [people.schoolId],

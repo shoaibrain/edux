@@ -1,6 +1,6 @@
 import { getRoles } from "@/lib/actions/role";
 import { RolesDataTable } from "./data-table";
-import { enforcePermission } from "@/lib/session"; // Import enforcePermission
+import { enforcePermission } from "@/lib/session";
 
 export default async function RolesPage() {
   // Enforce permission to view roles. If the user doesn't have 'role:read',

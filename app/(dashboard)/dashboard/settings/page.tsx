@@ -4,6 +4,11 @@ import { UpdatePasswordForm } from "./_components/update-password-form";
 import { DeleteAccountForm } from "./_components/delete-account-form";
 import { getSession } from "@/lib/session";
 
+/**
+ * Settings page for the dashboard.
+ * Allows users to update their profile, change password, and delete their account.
+ * @returns {JSX.Element} The settings page component.
+ */
 export default async function SettingsPage() {
   const session = await getSession();
   const currentUser = session; 
@@ -17,7 +22,7 @@ export default async function SettingsPage() {
         </p>
       </div>
       <Separator />
-      <UpdateProfileForm user={currentUser} /> {/* Pass user to the component */}
+      <UpdateProfileForm user={currentUser} />
       <UpdatePasswordForm />
       <DeleteAccountForm />
     </div>

@@ -40,7 +40,6 @@ function isDatabaseError(error: unknown): error is { code: string; message: stri
     return typeof error === 'object' && error !== null && 'code' in error;
 }
 
-// RE-ADD `getSchools` for the main data table
 export async function getSchools() {
     await enforcePermission('school:read');
     const session = await getSession();
@@ -49,7 +48,7 @@ export async function getSchools() {
 }
 
 export async function getSchoolById(id: number): Promise<SchoolFormData | null> {
-    // ... (implementation remains the same, but let's fix the type mappings)
+    if (!id) return null;
     await enforcePermission('school:read');
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
@@ -80,7 +79,6 @@ export async function getSchoolById(id: number): Promise<SchoolFormData | null> 
                 endDate: at.endDate || '',
             })),
         })),
-        // FIX type mismatch by handling null
         departments: school.departments.map(d => ({ ...d, id: d.id.toString(), description: d.description || undefined })),
         gradeLevels: school.gradeLevels.map(gl => ({...gl, id: gl.id.toString(), description: gl.description || undefined })),
         // Make branding optional
@@ -102,10 +100,12 @@ export async function upsertSchoolBasicInfo(data: z.infer<typeof BasicInfoSchema
 
     try {
         if (id) {
+            console.log('Updating school with ID:', id);
             const [updatedSchool] = await db.update(schools).set({ ...schoolData, updatedAt: new Date() }).where(eq(schools.id, id)).returning();
             revalidatePath(`/dashboard/schools`);
             return { success: true, message: 'Basic information updated.', school: updatedSchool };
         } else {
+            console.log('Creating new school with data:', schoolData);
             const [newSchool] = await db.insert(schools).values(schoolData).returning();
             revalidatePath('/dashboard/schools');
             return { success: true, message: 'School created successfully.', school: newSchool };
@@ -121,7 +121,7 @@ export async function upsertSchoolBasicInfo(data: z.infer<typeof BasicInfoSchema
 const formatZodArrayErrors = (error: z.ZodError): Record<string, string[] | undefined> => {
     const formattedErrors: Record<string, string[] | undefined> = {};
     error.issues.forEach(issue => {
-        const path = issue.path.join('.'); // e.g., "0.name" or "2.terms.0.startDate"
+        const path = issue.path.join('.');
         if (!formattedErrors[path]) {
             formattedErrors[path] = [];
         }
@@ -144,10 +144,11 @@ export async function upsertAcademicYears(schoolId: number, academicYearsData: z
         await db.transaction(async (tx) => {
             const existingYears = await tx.query.academicYears.findMany({ where: eq(academicYears.schoolId, schoolId), columns: { id: true } });
             if (existingYears.length > 0) {
+                console.log('Deleting existing academic terms for school ID:', schoolId);
                 await tx.delete(academicTerms).where(inArray(academicTerms.academicYearId, existingYears.map(y => y.id)));
             }
             await tx.delete(academicYears).where(eq(academicYears.schoolId, schoolId));
-
+            
             for (const yearData of validation.data) {
                 const [newYear] = await tx.insert(academicYears).values({
                     schoolId,
@@ -168,7 +169,7 @@ export async function upsertAcademicYears(schoolId: number, academicYearsData: z
                 }
             }
         });
-        revalidatePath(`/dashboard/schools/onboard/${schoolId}`);
+        revalidatePath(`/dashboard/schools/${schoolId}`);
         return { success: true, message: 'Academic information saved.' };
     } catch (error) {
         log.error({ error, schoolId }, 'Failed to upsert academic years.');
@@ -183,7 +184,6 @@ export async function upsertDepartments(schoolId: number, departmentsData: z.inf
 
     const validation = z.array(DepartmentSchema).safeParse(departmentsData);
     if (!validation.success) {
-        // FIX: Use the new error formatter
         return { success: false, message: 'Invalid department data.', errors: formatZodArrayErrors(validation.error) };
     }
 
@@ -198,7 +198,7 @@ export async function upsertDepartments(schoolId: number, departmentsData: z.inf
                 })));
             }
         });
-        revalidatePath(`/dashboard/schools/onboard/${schoolId}`);
+        revalidatePath(`/dashboard/schools/${schoolId}`);
         return { success: true, message: 'Departments saved.' };
     } catch (error) {
         log.error({ error, schoolId }, 'Failed to upsert departments.');
@@ -213,7 +213,6 @@ export async function upsertGradeLevels(schoolId: number, gradeLevelsData: z.inf
 
     const validation = z.array(GradeLevelSchema).safeParse(gradeLevelsData);
     if (!validation.success) {
-        // FIX: Use the new error formatter
         return { success: false, message: 'Invalid grade level data.', errors: formatZodArrayErrors(validation.error) };
     }
 
@@ -229,7 +228,7 @@ export async function upsertGradeLevels(schoolId: number, gradeLevelsData: z.inf
                 })));
             }
         });
-        revalidatePath(`/dashboard/schools/onboard/${schoolId}`);
+        revalidatePath(`/dashboard/schools/${schoolId}`);
         return { success: true, message: 'Grade levels saved.' };
     } catch (error) {
         log.error({ error, schoolId }, 'Failed to upsert grade levels.');
@@ -238,7 +237,6 @@ export async function upsertGradeLevels(schoolId: number, gradeLevelsData: z.inf
 }
 
 
-// RE-ADD `deleteSchoolAction` for the data table
 export async function deleteSchoolAction(schoolId: number) {
     await enforcePermission('school:delete');
     const session = await getSession();

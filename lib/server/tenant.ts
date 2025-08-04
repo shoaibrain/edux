@@ -1,4 +1,3 @@
-// lib/server/tenant.ts
 import { mainDb } from '@/lib/db';
 import { tenants } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';

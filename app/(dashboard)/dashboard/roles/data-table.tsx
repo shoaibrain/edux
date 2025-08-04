@@ -33,13 +33,14 @@ export function RolesDataTable({ data }: RolesDataTableProps) {
   const { user } = useTenant(); // Access user permissions from context
 
   // Check permissions for UI rendering
+  // Similar to tenant-provier, we need user-provider to access user permissions across the app
+  
   const canCreateRole = user.permissions.includes('role:create');
   const canEditRole = user.permissions.includes('role:update');
   const canDeleteRole = user.permissions.includes('role:delete');
   const canAssignRolePermissions = user.permissions.includes('role:assign_permissions');
 
   const handleEdit = React.useCallback((role: Role) => {
-    // Client-side guard for UI, server-side action will enforce
     if (!canEditRole) {
       toast.error("You do not have permission to edit roles.");
       return;
@@ -49,7 +50,6 @@ export function RolesDataTable({ data }: RolesDataTableProps) {
   }, [canEditRole]);
 
   const handleCreate = React.useCallback(() => {
-    // Client-side guard for UI, server-side action will enforce
     if (!canCreateRole) {
       toast.error("You do not have permission to create roles.");
       return;

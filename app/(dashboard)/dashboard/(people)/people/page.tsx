@@ -7,18 +7,18 @@ import { PeopleDataTable } from "./data-table";
 
 
 export default async function PeoplePage() {
-  await enforcePermission('person:read'); // Enforce permission to view people
+  await enforcePermission('person:read');
 
   const [people, schools, roles] = await Promise.all([
     getPeople(),
-    getSchools(), // Fetch all schools to allow selection when adding a person
-    getRoles(),   // Fetch all roles to allow assignment when granting user access
+    getSchools(),
+    getRoles(),
   ]);
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">People Management</h1>
-      <p className="text-muted-foreground">Manage all individuals (students, employees, guardians) in your organization.</p>
+      <p className="text-muted-foreground">Manage your system users.</p>
       <PeopleDataTable data={people} allSchools={schools} allRoles={roles} />
     </div>
   );

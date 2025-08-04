@@ -208,7 +208,7 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
 
                   {year.terms.length === 0 ? (
                     <>
-                      <p className="text-sm text-gray-500 text-center py-3 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-500 text-center py-3 rounded">
                         No terms defined for this academic year
                       </p>
                       {errors[`academicYears[${yearIndex}].terms`] && <p className="mt-1 text-xs text-red-600 text-center">{errors[`academicYears[${yearIndex}].terms`]?.[0]}</p>}
@@ -216,7 +216,7 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
                   ) : (
                     <div className="space-y-2">
                       {year.terms.map((term, termIndex) => (
-                        <div key={term.id} className="bg-gray-50 p-3 rounded border">
+                        <div key={term.id} className="p-3 rounded border">
                           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
                             <div>
                               <Label htmlFor={`term-name-${term.id}`} className="text-xs text-gray-600">

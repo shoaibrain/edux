@@ -38,6 +38,7 @@ export default function SignupPage() {
       const result = await res.json();
       if (res.ok) {
         toast.success(`Tenant "${data.orgName}" created successfully! Redirecting...`);
+        console.log(`protocol: ${protocol}, rootDomain: ${rootDomain}`);
         window.location.href = `${protocol}://${data.tenantId}.${rootDomain}/login`;
       } else {
         toast.error(result.error || 'Error creating tenant');
@@ -64,7 +65,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create your School</h1>
@@ -100,7 +101,7 @@ export default function SignupPage() {
                           className={cn("rounded-r-none", errors.tenantId && "border-red-500 focus-visible:ring-red-500")}
                         />
                       </FormControl>
-                      <span className={cn("inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm h-10", errors.tenantId && "border-red-500")}>
+                      <span className={cn("inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-sm h-10", errors.tenantId && "border-red-500")}>
                         .{rootDomain}
                       </span>
                     </div>

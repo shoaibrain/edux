@@ -10,7 +10,6 @@ export interface TenantContextType {
     id: string;
     tenantId: string;
     name: string;
-    // Add other tenant details here as needed, e.g., name
   };
 }
 

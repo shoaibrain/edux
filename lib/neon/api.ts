@@ -1,4 +1,3 @@
-// In lib/neon/api.ts
 import { env } from '@/env.mjs';
 import log from '@/lib/logger';
 

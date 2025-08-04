@@ -5,7 +5,6 @@ import { Users, Folder, Building, UserCircle } from "lucide-react";
 import { sql } from "drizzle-orm";
 
 async function getStats(tenantId: string) {
-    // No explicit permission check here, as enforcePermission will be called in the page.
     const db = await getTenantDb(tenantId);
     try {
         const userCountResult = await db.execute(sql`SELECT COUNT(*) FROM users;`);

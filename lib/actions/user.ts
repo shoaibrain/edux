@@ -19,7 +19,6 @@ export async function getUsersWithRoles() {
     const db = await getTenantDb(session.tenantId);
     
     try {
-        // Fetch users and eager load their associated person and roles
         const usersWithRoles = await db.query.users.findMany({
             with: {
                 person: true, // Load associated person data

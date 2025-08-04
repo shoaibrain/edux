@@ -1,11 +1,10 @@
-// app/page.tsx
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, BookOpen, BarChart } from 'lucide-react';
 
 export default function MarketingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-black">
+    <div className="flex flex-col min-h-screen dark:bg-black">
       <header className="px-4 lg:px-6 h-16 flex items-center shadow-sm bg-white dark:bg-gray-950">
         <Link href="#" className="flex items-center justify-center">
           <GraduationCap className="h-6 w-6 text-blue-600" />
