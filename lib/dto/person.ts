@@ -14,16 +14,16 @@ export const PersonFormSchema = z.object({
   middleName: z.string().nullable().optional(),
   dateOfBirth: z.string().nullable().optional(),
   gender: z.string().nullable().optional(),
-  contactEmail: z.email('Invalid email address.').nullable().optional(),
+  contactEmail: z.string().email('Invalid email address.').or(z.literal('')).nullable().optional(),
   contactPhone: z.string().nullable().optional(),
   address: z.string().nullable().optional(),
   personType: z.enum(personTypeEnum.enumValues as Readonly<[string, ...string[]]>),
   profilePictureUrl: z.string().url('Invalid URL.').nullable().optional(),
 
   // Fields for optional user account creation/update
-  // FIX: Changed from .default(false) to .optional() to resolve TypeScript conflict with react-hook-form.
   createUserAccount: z.boolean().optional(),
-  userEmail: z.email('Invalid email address.').nullable().optional(),
+  // FIX: Allow an empty string, as it's only required if createUserAccount is true.
+  userEmail: z.string().email('Invalid email address.').or(z.literal('')).nullable().optional(),
   userPassword: z.string().min(8, 'Password must be at least 8 characters.').or(z.literal('')).nullable().optional(),
   userRoles: z.array(z.string()).nullable().optional(),
 
@@ -36,7 +36,7 @@ export const PersonFormSchema = z.object({
         path: ['userEmail'],
       });
     }
-    // Password is required for new users, but not for existing ones
+    // Password is required only when creating a new user account.
     if (!data.id && !data.userPassword) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

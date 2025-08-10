@@ -8,7 +8,9 @@ import { Separator } from "@/components/ui/separator"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { MobileNav } from "@/components/mobile-nav"
 import { NavUser } from "@/components/user-nav"
-import { getTenantNavItems } from "@/lib/navigation" // Import our new service
+import { getTenantNavItems } from "@/lib/navigation"
+import { NavItem } from "@/components/navigation-provider"
+
 
 interface TenantLayoutProps {
   children?: React.ReactNode;
@@ -21,12 +23,12 @@ export default async function TenantLayout({ children }: TenantLayoutProps) {
   }
 
   // Fetch tenant-specific navigation items from our service
-  const tenantNavItems = getTenantNavItems(user);
+  const tenantNavItems: NavItem[] = getTenantNavItems(user);
 
   return (
     <SidebarProvider>
       {/* Pass the nav items directly to AppSidebar */}
-      <AppSidebar user={user} navItems={tenantNavItems} />
+      <AppSidebar user={user} />
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/80 px-4 backdrop-blur-lg sm:px-6">
           <div className="flex items-center gap-2">
