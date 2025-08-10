@@ -1,39 +1,33 @@
 import { z } from 'zod';
-import { personTypeEnum } from '@/lib/db/schema/tenant'; // Import the Drizzle enum
+import { personTypeEnum } from '@/lib/db/schema/tenant';
 
+/**
+ * @description Zod schema for validating the person form.
+ * This schema is used to validate the data from the person form before it's sent to the server.
+ * It ensures that all required fields are present and that the data is in the correct format.
+ */
 export const PersonFormSchema = z.object({
   id: z.number().optional(),
-  // schoolId is nullable in DB, so Zod should reflect that. Add .nullable().optional()
-  // .int() ensures it's an integer.
   schoolId: z.number().int({ message: "School ID must be an integer." }).nullable().optional(),
   firstName: z.string().min(1, 'First name is required.').max(100),
   lastName: z.string().min(1, 'Last name is required.').max(100),
-  middleName: z.string().nullable().optional(), // Added .optional() for consistency with DB schema
-  dateOfBirth: z.string().nullable().optional(), // Added .optional()
-  gender: z.string().nullable().optional(), // Added .optional()
-  contactEmail: z.email('Invalid email address.').nullable().optional(), // Added .optional()
-  contactPhone: z.string().nullable().optional(), // Added .optional()
-  address: z.string().nullable().optional(), // Added .optional()
-  
-  // Definitive fix for personType:
-  // 1. Cast personTypeEnum.enumValues to a tuple type for z.enum() to ensure correct overload.
-  // 2. Remove `required_error` from the options object, as it's not valid here.
+  middleName: z.string().nullable().optional(),
+  dateOfBirth: z.string().nullable().optional(),
+  gender: z.string().nullable().optional(),
+  contactEmail: z.string().email('Invalid email address.').or(z.literal('')).nullable().optional(),
+  contactPhone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
   personType: z.enum(personTypeEnum.enumValues as Readonly<[string, ...string[]]>),
-
-  profilePictureUrl: z.string().url('Invalid URL.').nullable().optional(), // Added .optional()
+  profilePictureUrl: z.string().url('Invalid URL.').nullable().optional(),
 
   // Fields for optional user account creation/update
-  createUserAccount: z.boolean().default(false), // .optional() is redundant with .default()
-  userEmail: z.string().email('Invalid email address.').nullable().optional(), // Added .optional()
-
-  // IMPROVEMENT: Explicitly allow an empty string to pass validation, matching your form's logic.
-  // .nullable().optional() ensures it matches the DB schema if it can be null.
+  createUserAccount: z.boolean().optional(),
+  // FIX: Allow an empty string, as it's only required if createUserAccount is true.
+  userEmail: z.string().email('Invalid email address.').or(z.literal('')).nullable().optional(),
   userPassword: z.string().min(8, 'Password must be at least 8 characters.').or(z.literal('')).nullable().optional(),
-  
-  userRoles: z.array(z.string()).nullable().optional(), // Added .optional() for consistency.
+  userRoles: z.array(z.string()).nullable().optional(),
 
 }).superRefine((data, ctx) => {
-  // This conditional validation is great and remains unchanged.
   if (data.createUserAccount) {
     if (!data.userEmail) {
       ctx.addIssue({
@@ -42,8 +36,8 @@ export const PersonFormSchema = z.object({
         path: ['userEmail'],
       });
     }
-    // Password is required for new users. An empty string is not a valid password.
-    if (!data.userPassword && !data.id) {
+    // Password is required only when creating a new user account.
+    if (!data.id && !data.userPassword) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'User password is required to create a new user account.',
@@ -53,5 +47,4 @@ export const PersonFormSchema = z.object({
   }
 });
 
-// This remains the same, ensuring your type is always in sync with the schema.
 export type PersonFormInput = z.infer<typeof PersonFormSchema>;

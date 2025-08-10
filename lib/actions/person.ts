@@ -13,18 +13,22 @@ function isDatabaseError(error: unknown): error is { code: string; message: stri
     return typeof error === 'object' && error !== null && 'code' in error;
 }
 
+/**
+ * @description Fetches all people from the database.
+ * @returns {Promise<any[]>} A promise that resolves to an array of people.
+ * @throws {Error} If the user does not have permission to read people or if the database query fails.
+ */
 export async function getPeople() {
     await enforcePermission('person:read');
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
 
     try {
-        // Fetch people and eager load their associated user record (with usersToRoles) and school record
         const result = await db.query.people.findMany({
             with: {
                 user: {
                     with: {
-                        usersToRoles: true, // Load usersToRoles to get user's roles for defaultUserRoles in form
+                        usersToRoles: true,
                     }
                 },
                 school: true,
@@ -37,14 +41,21 @@ export async function getPeople() {
     }
 }
 
+/**
+ * @description Upserts a person in the database.
+ * If the person already exists, it will be updated. Otherwise, it will be created.
+ * This function also handles the creation of a user account for the person if requested.
+ * @param {PersonFormInput} data - The person data to upsert.
+ * @returns {Promise<{success: boolean, message: string, errors?: any}>} A promise that resolves to an object with a success flag and a message.
+ */
 export async function upsertPersonAction(data: PersonFormInput) {
+    log.info({ data }, 'Upserting person...');
     const session = await getSession();
-
     const validatedFields = PersonFormSchema.safeParse(data);
 
     if (!validatedFields.success) {
         log.warn({ errors: validatedFields.error.flatten(), data }, 'Invalid person data provided for upsert.');
-        return { success: false, message: 'Invalid person data.' };
+        return { success: false, message: 'Invalid person data.', errors: validatedFields.error.flatten().fieldErrors };
     }
 
     const {
@@ -58,7 +69,6 @@ export async function upsertPersonAction(data: PersonFormInput) {
 
     const db = await getTenantDb(session.tenantId);
 
-    // Fetch `canAssignRoles` and `hasUserAccount` within the action scope
     const canAssignRoles = await hasPermission('user:assign_roles');
     const hasUserAccount = id ? !!(await db.query.users.findFirst({ where: eq(users.personId, id) })) : false;
 
@@ -73,7 +83,6 @@ export async function upsertPersonAction(data: PersonFormInput) {
                     firstName,
                     lastName,
                     middleName,
-                    // Convert string to Date object, or null if empty string/null/undefined
                     //@ts-expect-error('ignore')
                     dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
                     gender,
@@ -190,6 +199,11 @@ export async function upsertPersonAction(data: PersonFormInput) {
     return { success: true, message: `Person successfully ${id ? 'updated' : 'created'}.` };
 }
 
+/**
+ * @description Deletes a person from the database.
+ * @param {number} personId - The ID of the person to delete.
+ * @returns {Promise<{success: boolean, message: string}>} A promise that resolves to an object with a success flag and a message.
+ */
 export async function deletePersonAction(personId: number) {
     await enforcePermission('person:delete');
     const session = await getSession();

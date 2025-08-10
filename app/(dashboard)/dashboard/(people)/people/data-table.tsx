@@ -27,7 +27,7 @@ import { getColumns, Person } from "./columns";
 import { useTenant } from "@/components/tenant-provider";
 import { toast } from "sonner";
 import type { schools, roles } from "@/lib/db/schema/tenant"; 
-import { UserFormDialog } from "./user-form-dialog"
+import { PersonFormDialog } from "./person-form-dialog"
 
 interface PeopleDataTableProps {
   data: Person[];
@@ -151,11 +151,10 @@ export function PeopleDataTable({ data, allSchools, allRoles }: PeopleDataTableP
             </Button>
         </div>
         {(canCreatePerson || canEditPerson) && ( 
-            <UserFormDialog
+            <PersonFormDialog
                 key={editingPerson?.id}
                 isOpen={isDialogOpen}
                 setIsOpen={setIsDialogOpen}
-                //@ts-expect-error(editingPerson can be null)
                 person={editingPerson}
                 allSchools={allSchools}
                 allRoles={allRoles}
