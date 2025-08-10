@@ -1,3 +1,4 @@
+// components/app-sidebar.tsx
 "use client"
 
 import * as React from "react"
@@ -18,23 +19,27 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
-import { useNavigation } from "@/components/navigation-provider"
+// We no longer need useNavigation, but we still need the NavItem type
+import { type NavItem } from "@/components/navigation-provider"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user: UserSession;
+    // Add navItems as a required prop
+    navItems: NavItem[];
 }
+
 /**
- * @param param0 - The user session object containing user permissions and details.
+ * @param param0 - The user session object and navigation items.
  * @param props - Additional props for the sidebar component.
- * @returns  - A sidebar component that displays navigation items based on user permissions.
+ * @returns - A sidebar component that displays navigation items based on user permissions.
  */
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
+export function AppSidebar({ user, navItems: allNavItems,...props }: AppSidebarProps) {
   const { user: currentUserSession } = useTenant();
-  const { items: allNavItems } = useNavigation();
 
-  console.debug("[AppSidebar] User permissions:", currentUserSession?.permissions);
-  console.debug("[AppSidebar] All nav items from context:", allNavItems);
+  console.debug(" User permissions:", currentUserSession?.permissions);
+  console.debug(" Nav items from props:", allNavItems);
 
+  // The permission filtering logic remains the same
   const navItems = allNavItems.filter(item => {
     if (!item.requiredPermission) {
       return true;
@@ -42,7 +47,10 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
     return currentUserSession?.permissions?.includes(item.requiredPermission);
   });
 
-  console.log("[AppSidebar] Filtered nav items:", navItems);
+  console.log(" Filtered nav items:", navItems);
+  // Get the first nav item's URL or default to dashboard
+  const firstNavUrl = allNavItems[0]?.url || '/dashboard';
+  const isSchoolContext = firstNavUrl.startsWith('/dashboard/schools');
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -50,7 +58,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/dashboard">
+              {/* This link should dynamically go back to the correct dashboard */}
+              <a href={isSchoolContext ? '/dashboard/schools' : '/dashboard'}>
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Rocket className="size-4" />
                 </div>
@@ -65,6 +74,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        {/* MainNav already accepts items as a prop, so this works perfectly */}
         <MainNav items={navItems} />
       </SidebarContent>
 

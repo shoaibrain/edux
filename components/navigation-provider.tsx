@@ -6,6 +6,12 @@ import {
   Calendar, UserCheck, Building, GraduationCap, ClipboardList 
 } from "lucide-react";
 
+export interface NavItem {
+  title: string;
+  url: string;
+  iconName: IconName;
+  requiredPermission: string | null;
+}
 // Centralized map of all icons used for navigation
 export const iconMap = {
   Home,
@@ -24,12 +30,7 @@ export const iconMap = {
 
 export type IconName = keyof typeof iconMap;
 
-export interface NavItem {
-  title: string;
-  url: string;
-  iconName: IconName;
-  requiredPermission: string | null;
-}
+
 
 interface NavigationContextType {
   items: NavItem[];

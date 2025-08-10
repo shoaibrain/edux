@@ -2,10 +2,18 @@ import * as React from 'react';
 import { notFound } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 
-import { getSession, hasPermission } from '@/lib/session';
+import { getSession, hasPermission, UserSession } from '@/lib/session';
 import { getTenantDb } from '@/lib/db';
 import { schools } from '@/lib/db/schema/tenant';
-import { NavigationProvider, NavItem } from '@/components/navigation-provider';
+import { NavigationProvider } from '@/components/navigation-provider';
+import { getSchoolNavItems } from '@/lib/navigation'; // Import the new function
+import { TenantContextType, TenantProvider } from '@/components/tenant-provider';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/app-sidebar';
+import { Separator } from '@/components/ui/separator';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { MobileNav } from '@/components/mobile-nav';
+import { NavUser } from '@/components/user-nav';
 
 interface SchoolLayoutProps {
   children: React.ReactNode;
@@ -14,46 +22,6 @@ interface SchoolLayoutProps {
   }>;
 }
 
-/**
- * Generates the navigation items specific to the school context.
- * @param schoolId - The ID of the current school.
- * @returns An array of NavItem objects for the school sidebar.
- */
-const getSchoolNavItems = (schoolId: string): NavItem[] => [
-    {
-        title: "School Dashboard",
-        url: `/dashboard/schools/${schoolId}`,
-        iconName: "Home",
-        requiredPermission: "school:read",
-    },
-    {
-        title: "Students",
-        url: `/dashboard/schools/${schoolId}/students`,
-        iconName: "GraduationCap",
-        requiredPermission: "student:read",
-    },
-    {
-        title: "Staff",
-        url: `/dashboard/schools/${schoolId}/staff`,
-        iconName: "UserCheck",
-        requiredPermission: "staff:read",
-    },
-    {
-        title: "Academics",
-        url: `/dashboard/schools/${schoolId}/academics`,
-        iconName: "BookOpen",
-        requiredPermission: "academics:read",
-    },
-    {
-        title: "School Settings",
-        url: `/dashboard/schools/${schoolId}/settings`,
-        iconName: "Settings",
-        requiredPermission: "school:manage_settings",
-    },
-];
-
-
-// This is a shared data-fetching and authorization function for the school context.
 async function getSchoolData(schoolIdParam: string, tenantId: string) {
   console.log("Fetching school data for schoolId:", schoolIdParam, "and tenantId:", tenantId);
   const schoolId = parseInt(schoolIdParam, 10);
@@ -73,31 +41,50 @@ export default async function SchoolLayout({ children, params }: SchoolLayoutPro
   const { schoolId } = await params;
   const session = await getSession();
 
-  // RBAC check: User must have general permission to view any school.
   // if (!session || !hasPermission(session, 'school:read')) {
-  //   // In a real app, you might redirect to an access-denied page
   //   notFound();
   // }
   
   const school = await getSchoolData(schoolId, session.tenantId);
-
   if (!school) {
     notFound();
   }
-  
-  // TODO: Add fine-grained authorization.
-  // e.g., A SCHOOL_ADMIN should only be able to access schools they are assigned to.
-  // This would involve checking the usersToRoles table for an entry matching
-  // session.userId and school.id.
 
-  const schoolNavItems = getSchoolNavItems(schoolId);
-  console.log("[SchoolLayout] Navigation items:", schoolNavItems);
+  // Get the school-specific nav items from our centralized function
+  const schoolNavItems = getSchoolNavItems(schoolId, session);
 
-  // This provider overrides the parent layout's navigation items,
-  // making the sidebar context-aware for the school section.
+  const tenantContextValue: TenantContextType = {
+    user: session,
+    tenant: {
+      id: session.tenantId,
+      tenantId: session.tenantId,
+      name: session.name
+    },
+  };
+
   return (
-    <NavigationProvider initialItems={schoolNavItems}>
-      {children}
-    </NavigationProvider>
+    <TenantProvider value={tenantContextValue}>
+      <NavigationProvider initialItems={schoolNavItems}>
+        <SidebarProvider>
+          {/* Render the AppSidebar with the school-specific nav items */}
+          <AppSidebar user={session} navItems={schoolNavItems} />
+          <SidebarInset>
+            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/80 px-4 backdrop-blur-lg sm:px-6">
+              <div className="flex items-center gap-2">
+                <Separator orientation="vertical" className="mr-2 h-4 hidden md:flex" />
+                <Breadcrumb />
+                <MobileNav />
+              </div>
+              <div className="flex items-center gap-4">
+                <NavUser user={session} />
+              </div>
+            </header>
+            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+              {children}
+            </main>
+          </SidebarInset>
+        </SidebarProvider>
+      </NavigationProvider>
+    </TenantProvider>
   );
 }
