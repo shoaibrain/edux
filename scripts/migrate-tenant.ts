@@ -1,4 +1,3 @@
-// Create a new file: /scripts/migrate-tenant.ts
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';

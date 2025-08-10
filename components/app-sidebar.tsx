@@ -1,13 +1,11 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Rocket, Home, Users, Folder, Settings } from "lucide-react"
+import { Rocket, PanelLeft } from "lucide-react"
 
 import { type UserSession } from "@/lib/session"
-
-import { MainNav } from "./main-nav"
+import { useTenant } from "@/components/tenant-provider"
+import { MainNav } from "./sidebar-nav"
 import {
   Sidebar,
   SidebarContent,
@@ -16,24 +14,35 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { NavUser } from "./user-nav"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
+import { useNavigation } from "@/components/navigation-provider"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user: UserSession;
 }
-
+/**
+ * @param param0 - The user session object containing user permissions and details.
+ * @param props - Additional props for the sidebar component.
+ * @returns  - A sidebar component that displays navigation items based on user permissions.
+ */
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
-  const { state: sidebarState } = useSidebar(true);
-  const isCollapsed = sidebarState === 'collapsed';
+  const { user: currentUserSession } = useTenant();
+  const { items: allNavItems } = useNavigation();
 
-  const navItems = [
-    { title: "Dashboard", url: "/dashboard", iconName: "Home" as const },
-    { title: "Users", url: "/dashboard/users", iconName: "Users" as const },
-    { title: "Roles", url: "/dashboard/roles", iconName: "Folder" as const },
-    { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const },
-  ];
+  console.debug("[AppSidebar] User permissions:", currentUserSession?.permissions);
+  console.debug("[AppSidebar] All nav items from context:", allNavItems);
+
+  const navItems = allNavItems.filter(item => {
+    if (!item.requiredPermission) {
+      return true;
+    }
+    return currentUserSession?.permissions?.includes(item.requiredPermission);
+  });
+
+  console.log("[AppSidebar] Filtered nav items:", navItems);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -45,7 +54,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Rocket className="size-4" />
                 </div>
-                {/* **THE FIX**: This div now correctly handles the collapsed state */}
+
                 <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
                   <span className="font-semibold">EduX</span>
                   <span className="text-xs text-muted-foreground">Tenant Portal</span>
@@ -58,8 +67,19 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       <SidebarContent>
         <MainNav items={navItems} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={user} />
+
+      <SidebarFooter className="p-2 hidden md:block">
+        <SidebarTrigger
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "default" }),
+            "w-full justify-start"
+          )}
+        >
+          <PanelLeft className="mr-2 size-4" />
+          <span className="group-data-[collapsible=icon]:hidden">
+            Collapse
+          </span>
+        </SidebarTrigger>
       </SidebarFooter>
     </Sidebar>
   )

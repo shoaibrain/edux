@@ -1,72 +1,75 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { verify } from 'jsonwebtoken';
-import { env } from '@/env.mjs';
 import { getTenantDb } from '@/lib/db';
-import { UserFormSchema, type UserFormInput } from '@/lib/dto/user';
-import { users, usersToRoles } from '@/lib/db/schema/tenant';
+import { type UserFormInput } from '@/lib/dto/user'; 
+import { users, usersToRoles, roles, people } from '@/lib/db/schema/tenant'; 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import log from '../logger';
-
-interface UserSession {
-  tenantId: string;
-  userId: number;
-}
+import { enforcePermission, hasPermission, getSession } from '../session'; 
 
 function isDatabaseError(error: unknown): error is { code: string; message: string } {
     return typeof error === 'object' && error !== null && 'code' in error;
 }
 
-async function getSession() {
-  const token = (await cookies()).get('authToken')?.value;
-  if (!token) {
-    redirect('/login');
-  }
-  try {
-    return verify(token, env.JWT_SECRET) as UserSession;
-  } catch (e) {
-    log.error({ error: e }, 'Invalid session token');
-    redirect('/login');
-  }
-}
-
 export async function getUsersWithRoles() {
+    log.info('Fetching users with roles...');
+    await enforcePermission('user:read'); 
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
     
-    const usersWithRoles = await db.query.users.findMany({
-        with: {
-            usersToRoles: {
-                with: {
-                    role: true
+    try {
+        const usersWithRoles = await db.query.users.findMany({
+            with: {
+                person: true, // Load associated person data
+                usersToRoles: {
+                    with: {
+                        role: true
+                    }
                 }
             }
-        }
-    });
+        });
 
-    return usersWithRoles.map(user => ({
-       ...user,
-        roles: user.usersToRoles.map(ur => ur.role.name).join(', ')
-    }));
+        // Map to a more consumable format, including person's name
+        return usersWithRoles.map(user => ({
+           ...user,
+            personName: user.person ? `${user.person.firstName} ${user.person.lastName}` : 'N/A',
+            roles: user.usersToRoles.map(ur => ur.role.name).join(', ')
+        }));
+    } catch (error) {
+        log.error({ error, tenantId: session.tenantId }, 'Failed to fetch users with roles.');
+        throw new Error('Failed to retrieve users.');
+    }
 }
 
-// The invalid re-export has been removed from here.
-
+// This action is now primarily for managing an existing user record (email, password, roles).
+// Direct creation of a user linked to a person should happen via upsertPersonAction.
 export async function upsertUserAction(data: UserFormInput) {
+    log.info({ data }, 'Upserting user...');
     const session = await getSession();
+    
+    const requiredPermission = data.id ? 'user:update' : 'user:create'; 
+    await enforcePermission(requiredPermission);
+
+    if (data.roles && data.roles.length > 0) {
+        const canAssignRoles = await hasPermission('user:assign_roles');
+        if (!canAssignRoles) {
+            log.warn({ userId: session.userId, tenantId: session.tenantId, attemptedRoles: data.roles }, 'User attempted to assign roles without permission.');
+            return { success: false, message: 'You do not have permission to assign roles.' };
+        }
+    }
+
     const db = await getTenantDb(session.tenantId);
 
-    const { id, name, email, password, roles: roleIdsStr } = data;
-    const roleIds = roleIdsStr.map(Number);
+    // Note: 'name' field is no longer part of 'users' table. It's on 'people'.
+    const { id, email, password, roles: roleIdsStr } = data; 
+    const roleIds = roleIdsStr ? roleIdsStr.map(Number) : []; 
     
     try {
         await db.transaction(async (tx) => {
             if (id) { // Update existing user
-                const userToUpdate: { name: string; email: string; password?: string } = { name, email };
+                const userToUpdate: { email: string; password?: string } = { email };
                 if (password) {
                     const hashedPassword = await bcrypt.hash(password, 12);
                     userToUpdate.password = hashedPassword;
@@ -74,35 +77,24 @@ export async function upsertUserAction(data: UserFormInput) {
                 
                 await tx.update(users).set(userToUpdate).where(eq(users.id, id));
                 
+                // Update user roles
                 await tx.delete(usersToRoles).where(eq(usersToRoles.userId, id));
                 if (roleIds.length > 0) {
                     await tx.insert(usersToRoles).values(roleIds.map(roleId => ({
                         userId: id,
-                        roleId: roleId
+                        roleId: roleId,
+                        // schoolId: ?? // Decide how schoolId for role assignment is handled here if roles are school-scoped.
                     })));
                 }
+                log.info({ userId: id, email, tenantId: session.tenantId }, 'User updated.');
 
-            } else { // Create new user
-                if (!password) throw new Error("Password is required for new users.");
-                
-                const hashedPassword = await bcrypt.hash(password, 12);
-                
-                const [newUser] = await tx.insert(users).values({
-                    name,
-                    email,
-                    password: hashedPassword,
-                }).returning({ id: users.id });
-
-                if (roleIds.length > 0) {
-                    await tx.insert(usersToRoles).values(roleIds.map(roleId => ({
-                        userId: newUser.id,
-                        roleId: roleId
-                    })));
-                }
+            } else { 
+                log.warn({ tenantId: session.tenantId, email }, 'Attempted to create user without personId via upsertUserAction. This flow should be deprecated.');
+                return { success: false, message: "User creation without a linked person is not allowed." };
             }
         });
     } catch (error: unknown) {
-        log.error({ error }, 'Failed to upsert user');
+        log.error({ error, tenantId: session.tenantId, userId: session.userId, data }, 'Failed to upsert user');
         if (isDatabaseError(error) && error.code === '23505') {
             return { 
                 success: false, 
@@ -110,27 +102,33 @@ export async function upsertUserAction(data: UserFormInput) {
                 errors: { email: ["This email is already in use."] }
             };
         }
-        return { success: false, message: "An unexpected error occurred." };
+        return { success: false, message: "An unexpected error occurred while saving user." };
     }
 
-    revalidatePath('/dashboard/users');
+    revalidatePath('/dashboard/people'); 
+    revalidatePath('/dashboard/users'); 
     return { success: true, message: `User successfully ${id ? 'updated' : 'created'}.` };
 }
 
 export async function deleteUserAction(userId: number) {
+    await enforcePermission('user:delete'); 
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
 
     if (userId === session.userId) {
-        return { success: false, message: "You cannot delete your own account." };
+        log.warn({ userId: session.userId, tenantId: session.tenantId }, 'Attempted to delete own account via user management. Denied.');
+        return { success: false, message: "You cannot delete your own account from here. Use settings." };
     }
 
     try {
+        // Deleting a user does NOT delete the associated person record.
         await db.delete(users).where(eq(users.id, userId));
-        revalidatePath('/dashboard/users');
+        log.info({ userId, tenantId: session.tenantId }, 'User deleted.');
+        revalidatePath('/dashboard/people');
+        revalidatePath('/dashboard/users'); 
         return { success: true, message: "User deleted successfully." };
     } catch (error) {
-        log.error({ error, userId }, 'Failed to delete user');
+        log.error({ error, userId, tenantId: session.tenantId }, 'Failed to delete user');
         return { success: false, message: "Failed to delete user." };
     }
 }

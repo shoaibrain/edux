@@ -18,8 +18,25 @@ export async function POST(request: NextRequest) {
     log.info({ tenantId, email }, '[API] Login attempt.');
 
     const tenantDb = await getTenantDb(tenantId);
+    // Eagerly load the 'person' relation to get the user's name
     const userResult = await tenantDb.query.users.findFirst({
       where: eq(tenantSchema.users.email, email),
+      with: {
+        person: true, // Load associated person data
+        usersToRoles: {
+          with: {
+            role: {
+              with: {
+                rolesToPermissions: {
+                  with: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!userResult) {
@@ -33,7 +50,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const token = jwt.sign({ tenantId, userId: userResult.id }, env.JWT_SECRET, { expiresIn: '8h' });
+    // Aggregate all unique permission names for the user
+    const userPermissions = new Set<string>();
+    userResult.usersToRoles.forEach(userRole => {
+      userRole.role.rolesToPermissions.forEach(rolePermission => {
+        userPermissions.add(rolePermission.permission.name); 
+      });
+    });
+
+    // Create JWT payload with tenantId, userId, name (from person), email, and permissions
+    const tokenPayload = {
+      tenantId,
+      userId: userResult.id,
+      name: userResult.person ? `${userResult.person.firstName} ${userResult.person.lastName}` : userResult.email, // Use person's name, fallback to email
+      email: userResult.email,
+      permissions: Array.from(userPermissions), 
+    };
+
+    const token = jwt.sign(tokenPayload, env.JWT_SECRET, { expiresIn: '8h' });
     log.info({ tenantId, userId: userResult.id }, '[API] Login successful.');
 
     const response = NextResponse.json({ message: 'Login successful' });
