@@ -14,6 +14,7 @@ function isDatabaseError(error: unknown): error is { code: string; message: stri
 }
 
 export async function getUsersWithRoles() {
+    log.info('Fetching users with roles...');
     await enforcePermission('user:read'); 
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
@@ -45,6 +46,7 @@ export async function getUsersWithRoles() {
 // This action is now primarily for managing an existing user record (email, password, roles).
 // Direct creation of a user linked to a person should happen via upsertPersonAction.
 export async function upsertUserAction(data: UserFormInput) {
+    log.info({ data }, 'Upserting user...');
     const session = await getSession();
     
     const requiredPermission = data.id ? 'user:update' : 'user:create'; 

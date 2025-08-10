@@ -21,19 +21,30 @@ import { upsertUserAction } from '@/lib/actions/user';
 import type { roles, users } from '@/lib/db/schema/tenant';
 import { useTenant } from '@/components/tenant-provider';
 
+
+
+/**
+ * This form should be elegnat and enterprise looking Person Invite Form, where
+ * users can be invited to join the platform by providing their email and selecting
+ * their roles.
+ *
+ * This form should be able to create a user account just with email, like inviting new users.
+ * The other relation with Person should be able to link the user to a person record later.
+ */
+
 // Define the User type based on Drizzle's inference for the users table
 export type User = (typeof users.$inferSelect) & {
     roles: string; // This will be a comma-separated string of role names from getUsersWithRoles
 };
 
-
+// This should be PersonFormDialogProps
 interface UserFormDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   user: User | null;
   allRoles: (typeof roles.$inferSelect)[];
 }
-
+// Should be PersonFormDialog
 export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDialogProps) {
   const isEditMode = !!user;
   const { user: currentUserSession } = useTenant();
@@ -50,6 +61,8 @@ export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDi
     return role ? role.id.toString() : '';
   }).filter(Boolean) : [];
 
+  // analyze and make sure we are using the correct default values and form logic for PersonFormDialog. 
+  // based on the tenant schema
   const form = useForm<UserFormInput>({
     resolver: zodResolver(UserFormSchema),
     defaultValues: {
@@ -60,17 +73,8 @@ export function UserFormDialog({ isOpen, setIsOpen, user, allRoles }: UserFormDi
     },
   });
 
-  // React.useEffect(() => {
-  //   form.reset({
-  //     id: user?.id,
-  //     email: user?.email || '',
-  //     password: '',
-  //     roles: userRoleValues,
-  //   });
-  // }, [user, userRoleValues, form]);
-
-
   const onSubmit = async (values: UserFormInput) => {
+    console.log("Submitting user form with values:", values);
     const dataToSend = { ...values };
     if (isEditMode && !dataToSend.password) {
       delete dataToSend.password;

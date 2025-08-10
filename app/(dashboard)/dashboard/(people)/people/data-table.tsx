@@ -27,7 +27,7 @@ import { getColumns, Person } from "./columns";
 import { useTenant } from "@/components/tenant-provider";
 import { toast } from "sonner";
 import type { schools, roles } from "@/lib/db/schema/tenant"; 
-import { UserFormDialog } from "./user-form-dialog"
+import { UserFormDialog } from "./person-form-dialog"
 
 interface PeopleDataTableProps {
   data: Person[];

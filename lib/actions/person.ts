@@ -14,6 +14,7 @@ function isDatabaseError(error: unknown): error is { code: string; message: stri
 }
 
 export async function getPeople() {
+    console.log("[getPeople] Fetching people...");
     await enforcePermission('person:read');
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
@@ -38,10 +39,11 @@ export async function getPeople() {
 }
 
 export async function upsertPersonAction(data: PersonFormInput) {
+    log.info({ data }, 'Upserting person...');
     const session = await getSession();
-
+    log.info(`Validating person data...`);
     const validatedFields = PersonFormSchema.safeParse(data);
-
+    console.log({ validatedFields });
     if (!validatedFields.success) {
         log.warn({ errors: validatedFields.error.flatten(), data }, 'Invalid person data provided for upsert.');
         return { success: false, message: 'Invalid person data.' };
@@ -73,7 +75,6 @@ export async function upsertPersonAction(data: PersonFormInput) {
                     firstName,
                     lastName,
                     middleName,
-                    // Convert string to Date object, or null if empty string/null/undefined
                     //@ts-expect-error('ignore')
                     dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
                     gender,
