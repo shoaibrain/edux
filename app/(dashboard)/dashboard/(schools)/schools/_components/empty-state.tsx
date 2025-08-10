@@ -20,7 +20,7 @@ export function EmptyState({ canCreateSchool }: EmptyStateProps) {
       <div className="text-center max-w-md">
         <h3 className="text-2xl font-semibold  mb-2">No Schools Yet</h3>
         <p className="mb-8">
-          Get started by creating your first school. You'll be able to manage students, teachers, and all academic
+          Get started by creating your first school. You will be able to manage students, teachers, and all academic
           activities from a centralized dashboard.
         </p>
       </div>
@@ -58,7 +58,7 @@ export function EmptyState({ canCreateSchool }: EmptyStateProps) {
             <ArrowUp className="h-4 w-4" />
             <p className="text-sm font-medium">Ready to get started?</p>
           </div>
-          <p className="text-sm">Use the "Create School" button in the top right corner to begin.</p>
+          <p className="text-sm">Use the Create School button in the top right corner to begin.</p>
         </div>
       )}
     </div>

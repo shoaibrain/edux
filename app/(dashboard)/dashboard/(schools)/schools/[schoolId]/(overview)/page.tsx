@@ -19,15 +19,20 @@ import { eq } from "drizzle-orm"
 import {schools} from "@/lib/db/schema/tenant";
 import {notFound} from "next/navigation";
 
-// This School Dashboard page is a dynamic page.
-// Get school data from the server by schoolId
+// Type definition for Next.js 15 page props
+type SchoolDashboardPageProps = {
+  params: Promise<{
+    schoolId: string;
+  }>;
+};
+
+
 export default async function SchoolDashboardPage({
   params,
-}: {
-  params: { schoolId: string }
-}) {
-    const session = await getSession()
-  const schoolId = parseInt(params.schoolId, 10)
+}: SchoolDashboardPageProps) {
+  const { schoolId: schoolIdParam } = await params;
+  const session = await getSession()
+  const schoolId = parseInt(schoolIdParam, 10)
 
     if (isNaN(schoolId)) {
     notFound()

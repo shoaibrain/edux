@@ -1,4 +1,3 @@
-// app/dashboard/schools/[schoolId]/(school)/layout.tsx
 import * as React from 'react';
 import { notFound } from 'next/navigation';
 import { eq } from 'drizzle-orm';
@@ -6,15 +5,53 @@ import { eq } from 'drizzle-orm';
 import { getSession, hasPermission } from '@/lib/session';
 import { getTenantDb } from '@/lib/db';
 import { schools } from '@/lib/db/schema/tenant';
-
-
+import { NavigationProvider, NavItem } from '@/components/navigation-provider';
 
 interface SchoolLayoutProps {
   children: React.ReactNode;
-  params: Promise<{ // Changed to Promise
+  params: Promise<{ // `params` must be a Promise for dynamic layouts in Next.js 15
     schoolId: string;
   }>;
 }
+
+/**
+ * Generates the navigation items specific to the school context.
+ * @param schoolId - The ID of the current school.
+ * @returns An array of NavItem objects for the school sidebar.
+ */
+const getSchoolNavItems = (schoolId: string): NavItem[] => [
+    {
+        title: "School Dashboard",
+        url: `/dashboard/schools/${schoolId}`,
+        iconName: "Home",
+        requiredPermission: "school:read",
+    },
+    {
+        title: "Students",
+        url: `/dashboard/schools/${schoolId}/students`,
+        iconName: "GraduationCap",
+        requiredPermission: "student:read",
+    },
+    {
+        title: "Staff",
+        url: `/dashboard/schools/${schoolId}/staff`,
+        iconName: "UserCheck",
+        requiredPermission: "staff:read",
+    },
+    {
+        title: "Academics",
+        url: `/dashboard/schools/${schoolId}/academics`,
+        iconName: "BookOpen",
+        requiredPermission: "academics:read",
+    },
+    {
+        title: "School Settings",
+        url: `/dashboard/schools/${schoolId}/settings`,
+        iconName: "Settings",
+        requiredPermission: "school:manage_settings",
+    },
+];
+
 
 // This is a shared data-fetching and authorization function for the school context.
 async function getSchoolData(schoolIdParam: string, tenantId: string) {
@@ -33,18 +70,16 @@ async function getSchoolData(schoolIdParam: string, tenantId: string) {
 }
 
 export default async function SchoolLayout({ children, params }: SchoolLayoutProps) {
-  // Await the params to get the actual object
-  const { schoolId } = await params; // Destructure after awaiting
-
+  const { schoolId } = await params;
   const session = await getSession();
 
-  // RBAC check: Does the user have permission to even view school data?
-  // if (!hasPermission(session, 'school:read')) {
+  // RBAC check: User must have general permission to view any school.
+  // if (!session || !hasPermission(session, 'school:read')) {
   //   // In a real app, you might redirect to an access-denied page
   //   notFound();
   // }
   
-  const school = await getSchoolData(schoolId, session.tenantId); // Pass the resolved schoolId
+  const school = await getSchoolData(schoolId, session.tenantId);
 
   if (!school) {
     notFound();
@@ -55,10 +90,14 @@ export default async function SchoolLayout({ children, params }: SchoolLayoutPro
   // This would involve checking the usersToRoles table for an entry matching
   // session.userId and school.id.
 
+  const schoolNavItems = getSchoolNavItems(schoolId);
+  console.log("[SchoolLayout] Navigation items:", schoolNavItems);
+
+  // This provider overrides the parent layout's navigation items,
+  // making the sidebar context-aware for the school section.
   return (
-    <div className="flex-1 space-y-4">
-        <main>{children}</main>
-  
-    </div>
+    <NavigationProvider initialItems={schoolNavItems}>
+      {children}
+    </NavigationProvider>
   );
 }

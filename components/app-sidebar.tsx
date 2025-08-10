@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Rocket, DollarSign, Plug, Home, Users, Folder, Settings, PanelLeft } from "lucide-react"
+import { Rocket, PanelLeft } from "lucide-react"
 
 import { type UserSession } from "@/lib/session"
 import { useTenant } from "@/components/tenant-provider"
@@ -15,10 +15,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { useNavigation } from "@/components/navigation-provider"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user: UserSession;
@@ -29,33 +29,11 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
  * @returns  - A sidebar component that displays navigation items based on user permissions.
  */
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
-  const { state: sidebarState } = useSidebar(true);
   const { user: currentUserSession } = useTenant();
-  console.debug("[AppSidebar] Sidebar state:", sidebarState);
-  const canViewSchools = currentUserSession.permissions.includes('school:read');
-  const canCreateSchool = currentUserSession.permissions.includes('school:create');
-  const canEditSchool = currentUserSession.permissions.includes('school:update');
-  const canManageIntegrations = currentUserSession.permissions.includes('tenant:manage');
-  const canManageRoles = currentUserSession.permissions.includes('role:manage');
-  const canManageUsers = currentUserSession.permissions.includes('user:manage');
-  const canManageSettings = currentUserSession.permissions.includes('tenant:manage_settings');
-  
-  const canViewBilling = currentUserSession.permissions.includes('tenant:view_billing');
-  const canViewPeople = currentUserSession.permissions.includes('person:read');
+  const { items: allNavItems } = useNavigation();
 
-  console.log("[AppSidebar] Current user session:", currentUserSession);
-    console.debug("[AppSidebar] User permissions:", currentUserSession?.permissions);
-
-  const allNavItems = [
-    { title: "Dashboard", url: "/dashboard", iconName: "Home" as const, requiredPermission: 'dashboard:view' },
-    { title: "People", url: "/dashboard/people", iconName: "Users" as const, requiredPermission: 'person:read' },
-    { title: "Roles", url: "/dashboard/roles", iconName: "Folder" as const, requiredPermission: 'role:read' },
-    { title: "Schools", url: "/dashboard/schools", iconName: "Home" as const, requiredPermission: 'school:read' },
-    { title: "Billings", url: "/dashboard/billing", iconName: "DollarSign" as const, requiredPermission: 'tenant:view_billing' },
-    { title: "Integrations", url: "/dashboard/integrations", iconName: "Plug" as const, requiredPermission: 'tenant:manage' },
-    { title: "Settings", url: "/dashboard/settings", iconName: "Settings" as const, requiredPermission: null },
-  ];
-   console.debug("[AppSidebar] All nav items:", allNavItems);
+  console.debug("[AppSidebar] User permissions:", currentUserSession?.permissions);
+  console.debug("[AppSidebar] All nav items from context:", allNavItems);
 
   const navItems = allNavItems.filter(item => {
     if (!item.requiredPermission) {
