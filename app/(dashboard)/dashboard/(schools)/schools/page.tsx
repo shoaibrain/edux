@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSchools } from '@/lib/actions/schools';
 
@@ -7,6 +7,12 @@ import { getSchools } from '@/lib/actions/schools';
 import { getSession } from '@/lib/session';
 import { SchoolsClientActions } from './SchoolsClientActions';
 import { School } from './columns';
+import { SchoolGridSkeleton } from './_components/school-card-skeleton';
+import { EnhancedSchoolCard } from './_components/enhanced-school-card';
+import { EmptyState } from './_components/empty-state';
+import { Badge, Building2, Filter, Grid3X3, List, Search, TrendingUp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default async function AllSchoolsPage() {
   // Get session server-side instead of using useTenant()
@@ -20,47 +26,69 @@ export default async function AllSchoolsPage() {
   const schools = await getSchools();
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-            <h1 className="text-2xl font-bold">School Management</h1>
-            <p className="text-muted-foreground">
-                Select a school to manage or create a new one.
-            </p>
-        </div>
-        {canCreateSchool && (
-            <SchoolsClientActions 
-              canCreateSchool={canCreateSchool}
-              canEditSchool={canEditSchool}
-              canDeleteSchool={canDeleteSchool}
-            />
-        )}
-      </div>
-      
-      {schools.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {schools.map((school) => (
-            <SchoolCard 
-              key={school.id} 
-              school={school} 
-              canEditSchool={canEditSchool}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-            <h3 className="text-lg font-semibold">No schools found</h3>
-            <p className="text-sm text-muted-foreground">Get started by creating your first school.</p>
+      <div className="min-h-screen">
+      <div className="container mx-auto px-6 py-8">
+        {/*Header*/}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             {canCreateSchool && (
-              <SchoolsClientActions 
-                canCreateSchool={canCreateSchool}
+                <SchoolsClientActions
+                    canCreateSchool={canCreateSchool}
+                    canEditSchool={canEditSchool}
+                    canDeleteSchool={canDeleteSchool}
+                />
+            )}
+          </div>
+        </div>
+        {/* Search and Filter Bar - only show if there are schools */}
+        {schools.length > 0 && (
+          <div className="mb-8">
+            <Card className="border-0 shadow-sm backdrop-blur-sm">
+              <div className="p-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" />
+                    <Input
+                      placeholder="Search schools by name, location, or contact..."
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter
+                    </Button>
+                    <div className="flex border rounded-lg p-1">
+                      <Button variant="ghost" size="sm" className="p-2">
+                        <Grid3X3 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="p-2">
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Content Section */}
+        {schools.length > 0 ? (
+          <div className="grid gap-8 grid-cols-1 md:grid-cols-2 2xl:grid-cols-3">
+            {schools.map((school) => (
+              <EnhancedSchoolCard
+                key={school.id}
+                school={school}
                 canEditSchool={canEditSchool}
                 canDeleteSchool={canDeleteSchool}
-                showCreateButton={true}
               />
-            )}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <EmptyState canCreateSchool={canCreateSchool} />
+        )}
+      </div>
     </div>
   );
 }

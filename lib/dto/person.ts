@@ -11,7 +11,7 @@ export const PersonFormSchema = z.object({
   middleName: z.string().nullable().optional(), // Added .optional() for consistency with DB schema
   dateOfBirth: z.string().nullable().optional(), // Added .optional()
   gender: z.string().nullable().optional(), // Added .optional()
-  contactEmail: z.string().email('Invalid email address.').nullable().optional(), // Added .optional()
+  contactEmail: z.email('Invalid email address.').nullable().optional(), // Added .optional()
   contactPhone: z.string().nullable().optional(), // Added .optional()
   address: z.string().nullable().optional(), // Added .optional()
   

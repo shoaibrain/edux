@@ -13,7 +13,7 @@ import { Metadata } from 'next';
 type StaffProfilePageProps = {
   params: Promise<{
     schoolId: string;
-    staffId: string;
+    personId: string;
   }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
@@ -47,10 +47,10 @@ export async function generateMetadata(
   { params }: StaffProfilePageProps
 ): Promise<Metadata> {
   // Await the params Promise
-  const { schoolId, staffId } = await params;
+  const { schoolId, personId } = await params;
   
   const session = await getSession();
-  const profile = await getStaffProfile(staffId, session.tenantId);
+  const profile = await getStaffProfile(personId, session.tenantId);
   
   if (!profile) {
     return {
@@ -70,11 +70,11 @@ export async function generateMetadata(
 // --- PAGE COMPONENT (FIXED) ---
 export default async function StaffProfilePage({ params }: StaffProfilePageProps) {
   // Await the params Promise
-  const { schoolId, staffId } = await params;
+  const { schoolId, personId } = await params;
   
   const session = await getSession();
   
-  const profile = await getStaffProfile(staffId, session.tenantId);
+  const profile = await getStaffProfile(personId, session.tenantId);
 
   if (!profile) {
     notFound();
