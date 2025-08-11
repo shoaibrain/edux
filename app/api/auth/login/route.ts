@@ -13,6 +13,7 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    // The tenantId is now explicitly provided in the login form body.
     const { tenantId, email, password } = LoginWithTenantDto.parse(body);
 
     log.info({ tenantId, email }, '[API] Login attempt.');
@@ -78,10 +79,12 @@ export async function POST(request: NextRequest) {
       path: '/',
       maxAge: 8 * 60 * 60, // 8 hours
     });
-
-    console.log('Setting cookie for domain:', process.env.NODE_ENV === 'development' ? '.localhost' : '.yourdomain.com');
-    console.log('Request host:', request.headers.get('host'));
-    console.log('Response Set-Cookie:', response.headers.get('set-cookie'));
+    
+    // Commenting out domain-specific cookie settings for now.
+    // This can be re-enabled when subdomain routing is implemented again.
+    // console.log('Setting cookie for domain:', process.env.NODE_ENV === 'development' ? '.localhost' : '.yourdomain.com');
+    // console.log('Request host:', request.headers.get('host'));
+    // console.log('Response Set-Cookie:', response.headers.get('set-cookie'));
 
     return response;
 
