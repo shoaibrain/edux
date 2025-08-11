@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       await tenantDb.insert(tenantSchema.usersToRoles).values({
         userId: newAdminUser.id,
         roleId: tenantAdminRole.id,
-        schoolId: null, // Tenant-level role
+        schoolId: null,
       });
       log.info({ tenantId, userId: newAdminUser.id, role: 'TENANT_ADMIN' }, '[API] Assigned TENANT_ADMIN role to new admin user.');
     } else {
