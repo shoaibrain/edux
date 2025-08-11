@@ -1,4 +1,4 @@
-import { Database, Cloud, Lock, Server } from "lucide-react"
+import { Database, Cloud, Lock, Server } from "lucide-react";
 
 const securityFeatures = [
   {
@@ -21,42 +21,42 @@ const securityFeatures = [
     title: "Regular Audits & Compliance",
     description: "Undergo frequent security audits and comply with educational data privacy regulations.",
   },
-]
+];
 
 export function SecuritySection() {
   return (
-    <section className="w-full py-20 md:py-32 lg:py-40 bg-gradient-to-br from-gray-950 to-purple-950">
+    <section id="security" className="w-full py-20 md:py-28 lg:py-32 bg-black/20">
       <div className="container px-4 md:px-6 text-center">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="inline-block rounded-full bg-purple-600/20 px-4 py-1 text-sm font-semibold text-purple-300">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <div className="inline-block rounded-full bg-white/10 px-4 py-1 text-sm font-semibold text-gray-200">
             Enterprise Grade
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
-            Your Data, Our Priority: <span className="text-green-400">Uncompromised Security</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+            Your Data, Our Priority: Uncompromised Security
           </h2>
-          <p className="text-lg md:text-xl text-gray-300">
+          <p className="text-lg md:text-xl text-gray-400">
             Scholian is built with a multi-tenant architecture, ensuring robust enterprise-grade security and dedicated
             resources for every institution.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
           {securityFeatures.map((feature, index) => {
-            const Icon = feature.icon
+            const Icon = feature.icon;
             return (
               <div
                 key={index}
-                className="bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-700"
+                className="bg-white/5 p-8 rounded-xl border border-white/10 shadow-lg"
               >
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-purple-600/30 text-purple-400 mb-6 mx-auto">
-                  <Icon className="h-8 w-8" />
+                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-white/10 text-white mb-6 mx-auto">
+                  <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-gray-300 text-base">{feature.description}</p>
+                <p className="text-gray-400 text-base">{feature.description}</p>
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }
