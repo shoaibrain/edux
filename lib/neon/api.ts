@@ -3,18 +3,18 @@ import log from '@/lib/logger';
 
 const NEON_API_BASE = 'https://console.neon.tech/api/v2';
 
+const getHeaders = () => ({
+  'Authorization': `Bearer ${env.NEON_API_KEY}`,
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+});
+
 export async function createNeonProject(tenantId: string) {
   log.info({ tenantId }, '[NeonAPI] Starting project creation process.');
 
-  const headers = {
-    'Authorization': `Bearer ${env.NEON_API_KEY}`,
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-
   const projectResponse = await fetch(`${NEON_API_BASE}/projects`, {
     method: 'POST',
-    headers,
+    headers: getHeaders(),
     body: JSON.stringify({
       project: { name: `edux-tenant-${tenantId}` },
     }),
@@ -38,11 +38,31 @@ export async function createNeonProject(tenantId: string) {
 
   log.info({ tenantId, projectId: project.id }, '[NeonAPI] Project created successfully.');
 
-  // The modification to create a pooled string has been removed.
-  // We will now return the original, direct connection string.
-
   return {
     projectId: project.id,
     connectionString: connection_uri,
   };
+}
+
+/**
+ * Deletes a Neon project by its ID.
+ * This is used for cleanup if the tenant setup process fails after project creation.
+ * @param {string} projectId - The ID of the Neon project to delete.
+ */
+export async function deleteNeonProject(projectId: string) {
+  log.warn({ projectId }, '[NeonAPI] Deleting Neon project due to setup failure.');
+  
+  const deleteResponse = await fetch(`${NEON_API_BASE}/projects/${projectId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+
+  if (!deleteResponse.ok) {
+    const errorBody = await deleteResponse.text();
+    // Log this as an error, as it requires manual cleanup, but don't throw,
+    // as we still want to inform the user that the initial signup failed.
+    log.error({ projectId, status: deleteResponse.status, errorBody }, '[NeonAPI] CRITICAL: Failed to delete orphaned project. Manual cleanup required.');
+  } else {
+    log.info({ projectId }, '[NeonAPI] Successfully deleted orphaned project.');
+  }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { TenantSignupDto } from '@/lib/dto/tenant';
-import { createNeonProject } from '@/lib/neon/api';
+import { createNeonProject, deleteNeonProject } from '@/lib/neon/api';
 import { mainDb, getTenantDb } from '@/lib/db';
 import { tenants } from '@/lib/db/schema/shared';
 import * as tenantSchema from '@/lib/db/schema/tenant';
@@ -16,6 +16,7 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   let neonProjectId: string | null = null;
+  const { tenantId } = await request.clone().json();
   try {
     const body = await request.json();
     const data = TenantSignupDto.parse(body);
@@ -101,23 +102,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Tenant created successfully', tenantId });
 
   } catch (err) {
-    let errorDetails = {};
-    if (err instanceof Error) {
-        errorDetails = {
-            name: err.name,
-            message: err.message,
-            stack: err.stack,
-        };
-    } else {
-        errorDetails = { error: 'An unknown error occurred' };
-    }
-
-    log.error({ ...errorDetails, neonProjectId }, '[API] Tenant creation failed.');
+ let errorMessage = 'Internal server error';
+ let errorDetails ={};
+     errorDetails = { error: 'An unknown error occurred' };
 
     if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid input', details: err }, { status: 400 });
+        errorMessage = 'Invalid input';
+        errorDetails = err.flatten();
+        return NextResponse.json({ error: errorMessage, details: errorDetails }, { status: 400 });
     }
-    console.log(`ERRROR:${JSON.stringify(err)}`)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    
+    if (err instanceof Error) {
+        errorMessage = err.message;
+        errorDetails = { name: err.name, message: err.message, stack: err.stack };
+    }
+
+    log.error({ ...errorDetails, tenantId, neonProjectId }, '[API] Tenant creation failed.');
+
+    if (neonProjectId) {
+      await deleteNeonProject(neonProjectId);
+    }
+    
+    return NextResponse.json({ error: 'Failed to create tenant. Please try again.' }, { status: 500 });
   }
 }

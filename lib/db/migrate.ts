@@ -1,27 +1,32 @@
-// In /lib/db/migrate.ts
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
+import fs from 'fs/promises';
+import path from 'path';
 import log from '@/lib/logger';
-import { seedTenantData } from '@/scripts/seed-tenant-data';
 
+/**
+ * Applies the full tenant schema from a single SQL file to a new tenant database.
+ * This method is reliable in serverless environments where migration folders may not be available.
+ * @param {string} connectionString - The connection string for the new tenant database.
+ */
 export async function runTenantMigrations(connectionString: string) {
-  // Use postgres 'on-the-fly' with max 1 connection for migrations
   const migrationClient = postgres(connectionString, { max: 1 });
-  const db = drizzle(migrationClient);
-
+  
   try {
-    log.info('Starting tenant migration...');
-    await migrate(db, { migrationsFolder: './drizzle/tenant' });
-    log.info('Tenant migration completed successfully.');
+    log.info('Applying tenant schema from SQL snapshot...');
+    
+    // Construct the path to the schema file. This assumes the file is at the root of the project.
+    const schemaPath = path.join(process.cwd(), 'drizzle', 'tenant', '0000_nebulous_wind_dancer.sql');
+    const schemaSql = await fs.readFile(schemaPath, 'utf-8');
 
-    log.info('Starting tenant data seeding...');
-    //@ts-expect-error("cast as any to satisfy the seeder's type expectation")
-    await seedTenantData(db);
+    // Execute the entire schema SQL as a single query
+    await migrationClient.unsafe(schemaSql);
+
+    log.info('Tenant schema applied successfully.');
   } catch (error) {
-    log.error({ error }, 'Tenant migration failed.');
-    // Re-throw the error to ensure the API call fails loudly
-    throw new Error('Could not run tenant migrations.');
+    log.error({ error }, 'Applying tenant schema failed.');
+    // Re-throw the error to ensure the API call fails loudly and triggers cleanup
+    throw new Error('Could not apply tenant schema.');
   } finally {
     // Ensure the connection is closed
     await migrationClient.end();

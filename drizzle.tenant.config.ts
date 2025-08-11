@@ -10,7 +10,7 @@ export default defineConfig({
   // This is the crucial line to add/correct
   out: './drizzle/tenant', 
   dbCredentials: {
-    url: process.env.TENANT_DATABASE_URL!,
+    url: process.env.TENANT_DATABASE_URL || 'postgresql://user:password@host:port/db',
   },
   verbose: true,
   strict: true,
