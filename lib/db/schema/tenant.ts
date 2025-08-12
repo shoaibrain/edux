@@ -15,7 +15,22 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   password: text('password').notNull(),
   personId: integer('person_id').notNull().references(() => people.id, { onDelete: 'cascade' }).unique(),
+  emailVerified: timestamp('email_verified', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const verificationTokens = pgTable('verification_tokens', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    token: text('token').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+});
+
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    token: text('token').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 });
 
 // Existing roles table
@@ -194,6 +209,22 @@ export const usersRelations = relations(users, ({ one, many }) => ({
         references: [people.id],
     }),
     usersToRoles: many(usersToRoles),
+    verificationTokens: many(verificationTokens),
+    passwordResetTokens: many(passwordResetTokens),
+}));
+
+export const verificationTokensRelations = relations(verificationTokens, ({ one }) => ({
+    user: one(users, {
+        fields: [verificationTokens.userId],
+        references: [users.id],
+    }),
+}));
+
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+    user: one(users, {
+        fields: [passwordResetTokens.userId],
+        references: [users.id],
+    }),
 }));
 
 export const rolesRelations = relations(roles, ({ many }) => ({

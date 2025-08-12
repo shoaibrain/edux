@@ -1,3 +1,4 @@
+// app/signup/page.tsx
 'use client';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,12 +10,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
-import { rootDomain, protocol } from '@/lib/utils';
+import { rootDomain } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter(); // Initialize useRouter
 
   const form = useForm<TenantSignupInput>({
     resolver: zodResolver(TenantSignupDto),
@@ -38,13 +40,9 @@ export default function SignupPage() {
       });
       const result = await res.json();
       if (res.ok) {
-        toast.success(`Tenant "${data.orgName}" created successfully! Redirecting...`);
-        // TODO: For future subdomain implementation, the redirect would be:
-        // window.location.href = `${protocol}://${data.tenantId}.${rootDomain}/login`;
-        
-        // For now, redirect to the main login page
-        window.location.href = '/login';
-        
+        toast.success(`Account for "${data.orgName}" created! Please verify your email.`);
+        // Redirect to the verification page with email and tenantId
+        router.push(`/verify-email?email=${encodeURIComponent(result.email)}&tenantId=${encodeURIComponent(result.tenantId)}`);
       } else {
         toast.error(result.error || 'Error creating tenant');
         if (res.status === 409) {
@@ -106,7 +104,6 @@ export default function SignupPage() {
                           className={cn("rounded-r-none", errors.tenantId && "border-red-500 focus-visible:ring-red-500")}
                         />
                       </FormControl>
-                      {/* This part can be removed if you don't want to show the root domain */}
                       <span className={cn("inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-sm h-10", errors.tenantId && "border-red-500")}>
                         .{rootDomain}
                       </span>

@@ -48,11 +48,12 @@ export async function getSchools() {
 }
 
 export async function getSchoolById(id: number): Promise<SchoolFormData | null> {
+    log.info({ id }, 'Fetching school by ID');
     if (!id) return null;
     await enforcePermission('school:read');
     const session = await getSession();
     const db = await getTenantDb(session.tenantId);
-
+    log.info({ tenantId: session.tenantId, schoolId: id }, 'Fetching school from database');
     const school = await db.query.schools.findFirst({
         where: eq(schools.id, id),
         with: {
@@ -81,7 +82,6 @@ export async function getSchoolById(id: number): Promise<SchoolFormData | null> 
         })),
         departments: school.departments.map(d => ({ ...d, id: d.id.toString(), description: d.description || undefined })),
         gradeLevels: school.gradeLevels.map(gl => ({...gl, id: gl.id.toString(), description: gl.description || undefined })),
-        // Make branding optional
         branding: school.brandingJson ? JSON.parse(school.brandingJson as string) : undefined,
     };
 }

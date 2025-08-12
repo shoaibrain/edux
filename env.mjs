@@ -8,6 +8,7 @@ export const env = createEnv({
     NEON_API_KEY: z.string().min(1),
     NEON_ORG_ID: z.string().min(1),
     ENCRYPTION_KEY: z.string().min(1, "ENCRYPTION_KEY must be 32 characters long"),
+    RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY must be provided"),
     
   },
   client: {},
@@ -17,5 +18,6 @@ export const env = createEnv({
     NEON_API_KEY: process.env.NEON_API_KEY,
     NEON_ORG_ID: process.env.NEON_ORG_ID,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
   },
 });
