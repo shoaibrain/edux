@@ -30,7 +30,8 @@ CREATE TABLE "departments" (
 	"school_id" integer NOT NULL,
 	"name" text NOT NULL,
 	"description" text,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "employees" (

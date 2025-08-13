@@ -98,7 +98,7 @@ export const departments = pgTable('departments', {
     name: text('name').notNull(),
     description: text('description'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => ({
     unqSchoolDept: uniqueIndex('unq_school_dept').on(t.schoolId, t.name),
 }));
