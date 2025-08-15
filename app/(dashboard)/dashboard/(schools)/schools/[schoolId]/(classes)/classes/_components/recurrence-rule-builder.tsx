@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 
 interface RecurrenceRuleBuilderProps {
   onChange: (rruleString: string) => void;
-  startDate: Date;
+  startDate?: Date; // optional; defaults to today
   initialValue?: string | null;
 }
 
@@ -34,10 +34,9 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
         if (rule) {
           setFreq(rule.options.freq);
           setInterval(rule.options.interval || 1);
-          // The byweekday property can be a number, an array of numbers, or Weekday instances. We normalize it to a number array.
           const weekdays = (rule.options.byweekday as (number[] | number | Weekday[] | Weekday)) || [];
           if (Array.isArray(weekdays)) {
-             setByweekday(weekdays.map(d => typeof d === 'number' ? d : d.weekday));
+            setByweekday(weekdays.map(d => typeof d === 'number' ? d : d.weekday));
           } else if (typeof weekdays === 'number') {
             setByweekday([weekdays]);
           } else if (weekdays instanceof Weekday) {
@@ -46,19 +45,19 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
           setUntil(rule.options.until || undefined);
         }
       } catch (e) {
-        console.error("Error parsing initial RRULE string", e);
+        console.error('Error parsing initial RRULE string', e);
       }
     }
   }, [initialValue]);
 
   useEffect(() => {
-    if (!startDate) return;
+    const dtStart = startDate ?? new Date();
 
     try {
       const options: RRule.Options = {
         freq,
         interval,
-        dtstart: startDate,
+        dtstart: dtStart,
         wkst: RRule.SU,
       };
 
@@ -66,7 +65,6 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
         options.byweekday = byweekday;
       }
       if (until) {
-        // Set time to end of day to include the selected day
         const untilDate = new Date(until);
         untilDate.setHours(23, 59, 59, 999);
         options.until = untilDate;
@@ -75,7 +73,7 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
       const rule = new RRule(options);
       onChange(rule.toString());
     } catch (e) {
-      console.error("Error generating RRULE string", e);
+      console.error('Error generating RRULE string', e);
     }
   }, [freq, interval, byweekday, until, startDate, onChange]);
 
@@ -97,21 +95,21 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
           <Input type="number" value={interval} onChange={(e) => setInterval(Math.max(1, Number(e.target.value)))} min={1} />
         </div>
         <div className="space-y-1">
-            <Label>Ends on (optional)</Label>
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn("w-full justify-start text-left font-normal", !until && "text-muted-foreground")}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {until ? format(until, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={until} onSelect={setUntil} initialFocus />
-                </PopoverContent>
-            </Popover>
+          <Label>Ends on (optional)</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn("w-full justify-start text-left font-normal", !until && "text-muted-foreground")}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {until ? format(until, 'PPP') : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar mode="single" selected={until} onSelect={setUntil} initialFocus />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       {freq === RRule.WEEKLY && (
@@ -136,5 +134,5 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
         </div>
       )}
     </div>
-  )
-  };
+  );
+}
