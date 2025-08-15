@@ -35,6 +35,7 @@ export const defaultPermissions = [
   { name: 'department:manage', description: 'Create, read, update, and delete departments.' },
   { name: 'grade_level:manage', description: 'Create, read, update, and delete grade levels.' },
 
+
   // People Management Permissions
   { name: 'person:create', description: 'Create new people records (students, employees, guardians).' },
   { name: 'person:read', description: 'View people records.' },
@@ -45,6 +46,8 @@ export const defaultPermissions = [
   { name: 'guardian:manage', description: 'Manage guardian records and their association with students.' },
   { name: 'user:grant_access', description: 'Grant system access to a person by creating a user account.' }, // New permission for linking Person to User
 
+  { name: 'class:manage', description: 'Create, read, update, and delete class periods and schedules.' },
+  
   // General dashboard view
   { name: 'dashboard:view', description: 'Access the main dashboard overview.' },
 ];
@@ -59,6 +62,7 @@ export const rolePermissionsMap: Record<string, string[]> = {
     'academic_year:manage', 'academic_term:manage', 'department:manage', 'grade_level:manage', 
     'person:create', 'person:read', 'person:update', 'person:delete',
     'student:admit', 'employee:onboard', 'guardian:manage',
+    'class:manage',
     'dashboard:view',
   ],
   'SCHOOL_ADMIN': [
@@ -68,6 +72,7 @@ export const rolePermissionsMap: Record<string, string[]> = {
     'academic_year:manage', 'academic_term:manage', 'department:manage', 'grade_level:manage', 
     'person:create', 'person:read', 'person:update', 'person:delete',
     'student:admit', 'employee:onboard', 'guardian:manage',
+    'class:manage',
     'dashboard:view',
   ],
   'MEMBER': [

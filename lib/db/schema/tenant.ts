@@ -1,4 +1,4 @@
-import { serial, text, pgTable, integer, timestamp, primaryKey, uniqueIndex, boolean, jsonb, date, pgEnum } from 'drizzle-orm/pg-core';
+import { serial, text, pgTable, integer, timestamp, primaryKey, uniqueIndex, boolean, jsonb, date, pgEnum, time } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // --- ENUMS ---
@@ -185,6 +185,52 @@ export const studentGuardians = pgTable('student_guardians', {
   pk: primaryKey({ columns: [t.studentId, t.guardianId] }),
 }));
 
+export const locations = pgTable('locations', {
+    id: serial('id').primaryKey(),
+    schoolId: integer('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(), // e.g., "Room 201", "Science Lab", "Gymnasium"
+    description: text('description'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+    unqSchoolLocation: uniqueIndex('unq_school_location').on(table.schoolId, table.name),
+}));
+
+export const subjects = pgTable('subjects', {
+    id: serial('id').primaryKey(),
+    schoolId: integer('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+    departmentId: integer('department_id').references(() => departments.id, { onDelete: 'set null' }),
+    name: text('name').notNull(), // e.g., "Algebra I"
+    subjectCode: text('subject_code'), // e.g., "MATH-101"
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+    unqSchoolSubject: uniqueIndex('unq_school_subject').on(table.schoolId, table.name),
+}));
+
+export const classPeriods = pgTable('class_periods', {
+    id: serial('id').primaryKey(),
+    schoolId: integer('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+    academicTermId: integer('academic_term_id').notNull().references(() => academicTerms.id, { onDelete: 'cascade' }),
+    subjectId: integer('subject_id').notNull().references(() => subjects.id, { onDelete: 'cascade' }),
+    teacherId: integer('teacher_id').notNull().references(() => people.id, { onDelete: 'cascade' }), // References 'people' table
+    gradeLevelId: integer('grade_level_id').references(() => gradeLevels.id, { onDelete: 'set null' }),
+    locationId: integer('location_id').references(() => locations.id, { onDelete: 'set null' }),
+    name: text('name').notNull(), // e.g., "Algebra I - Section A"
+    rrule: text('rrule'), // Stores the RRULE string for recurring classes
+    startTime: time('start_time').notNull(), // e.g., '09:00:00'
+    endTime: time('end_time').notNull(), // e.g., '09:50:00'
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const classPeriodEnrollments = pgTable('class_period_enrollments', {
+    studentId: integer('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+    classPeriodId: integer('class_period_id').notNull().references(() => classPeriods.id, { onDelete: 'cascade' }),
+    enrollmentDate: date('enrollment_date').notNull().defaultNow(),
+}, (t) => ({
+    pk: primaryKey({ columns: [t.studentId, t.classPeriodId] }),
+}));
 
 // --- RELATIONS (Updated with new tables) ---
 
@@ -237,6 +283,9 @@ export const schoolsRelations = relations(schools, ({ many }) => ({
     gradeLevels: many(gradeLevels),
     people: many(people), // A school has many people
     usersToRoles: many(usersToRoles),
+    subjects: many(subjects), // New
+    locations: many(locations), // New
+    classPeriods: many(classPeriods), // New
 }));
 
 export const academicYearsRelations = relations(academicYears, ({ one, many }) => ({
@@ -247,12 +296,14 @@ export const academicYearsRelations = relations(academicYears, ({ one, many }) =
     academicTerms: many(academicTerms),
 }));
 
-export const academicTermsRelations = relations(academicTerms, ({ one }) => ({
+export const academicTermsRelations = relations(academicTerms, ({ one, many }) => ({
     academicYear: one(academicYears, {
         fields: [academicTerms.academicYearId],
         references: [academicYears.id],
     }),
+    classPeriods: many(classPeriods), // New
 }));
+
 
 export const departmentsRelations = relations(departments, ({ one, many }) => ({
     school: one(schools, {
@@ -260,6 +311,7 @@ export const departmentsRelations = relations(departments, ({ one, many }) => ({
         references: [schools.id],
     }),
     employees: many(employees),
+    subjects: many(subjects), // New
 }));
 
 export const gradeLevelsRelations = relations(gradeLevels, ({ one, many }) => ({
@@ -268,6 +320,7 @@ export const gradeLevelsRelations = relations(gradeLevels, ({ one, many }) => ({
         references: [schools.id],
     }),
     students: many(students),
+    classPeriods: many(classPeriods), // New
 }));
 
 export const peopleRelations = relations(people, ({ one, many }) => ({
@@ -291,6 +344,7 @@ export const peopleRelations = relations(people, ({ one, many }) => ({
         fields: [people.id],
         references: [guardians.personId],
     }),
+    taughtClasses: many(classPeriods), // New: A person (teacher) can teach many classes
 }));
 
 export const studentsRelations = relations(students, ({ one, many }) => ({
@@ -303,6 +357,7 @@ export const studentsRelations = relations(students, ({ one, many }) => ({
         references: [gradeLevels.id],
     }),
     studentGuardians: many(studentGuardians),
+    classPeriodEnrollments: many(classPeriodEnrollments), // New
 }));
 
 export const employeesRelations = relations(employees, ({ one }) => ({
@@ -333,4 +388,30 @@ export const studentGuardiansRelations = relations(studentGuardians, ({ one }) =
         fields: [studentGuardians.guardianId],
         references: [guardians.id],
     }),
+}));
+
+export const locationsRelations = relations(locations, ({ one, many }) => ({
+    school: one(schools, { fields: [locations.schoolId], references: [schools.id] }),
+    classPeriods: many(classPeriods),
+}));
+
+export const subjectsRelations = relations(subjects, ({ one, many }) => ({
+    school: one(schools, { fields: [subjects.schoolId], references: [schools.id] }),
+    department: one(departments, { fields: [subjects.departmentId], references: [departments.id] }),
+    classPeriods: many(classPeriods),
+}));
+
+export const classPeriodsRelations = relations(classPeriods, ({ one, many }) => ({
+    school: one(schools, { fields: [classPeriods.schoolId], references: [schools.id] }),
+    academicTerm: one(academicTerms, { fields: [classPeriods.academicTermId], references: [academicTerms.id] }),
+    subject: one(subjects, { fields: [classPeriods.subjectId], references: [subjects.id] }),
+    teacher: one(people, { fields: [classPeriods.teacherId], references: [people.id] }),
+    gradeLevel: one(gradeLevels, { fields: [classPeriods.gradeLevelId], references: [gradeLevels.id] }),
+    location: one(locations, { fields: [classPeriods.locationId], references: [locations.id] }),
+    classPeriodEnrollments: many(classPeriodEnrollments),
+}));
+
+export const classPeriodEnrollmentsRelations = relations(classPeriodEnrollments, ({ one }) => ({
+    student: one(students, { fields: [classPeriodEnrollments.studentId], references: [students.id] }),
+    classPeriod: one(classPeriods, { fields: [classPeriodEnrollments.classPeriodId], references: [classPeriods.id] }),
 }));

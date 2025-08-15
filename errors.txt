@@ -1,0 +1,439 @@
+[{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2322",
+	"severity": 8,
+	"message": "Type 'Resolver<{ schoolId: number; name: string; academicTermId: unknown; subjectId: unknown; teacherId: unknown; startTime: string; endTime: string; id?: number | undefined; gradeLevelId?: unknown; locationId?: unknown; isRecurring?: boolean | undefined; rrule?: string | ... 1 more ... | undefined; }, any, { ...; }>' is not assignable to type 'Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more...'.\n  Types of parameters 'options' and 'options' are incompatible.\n    Type 'ResolverOptions<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ......' is not assignable to type 'ResolverOptions<{ schoolId: number; name: string; academicTermId: unknown; subjectId: unknown; teacherId: unknown; startTime: string; endTime: string; id?: number | undefined; gradeLevelId?: unknown; locationId?: unknown; isRecurring?: boolean | undefined; rrule?: string | ... 1 more ... | undefined; }>'.\n      Type 'unknown' is not assignable to type 'number'.",
+	"source": "ts",
+	"startLineNumber": 35,
+	"startColumn": 5,
+	"endLineNumber": 35,
+	"endColumn": 13,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2345",
+	"severity": 8,
+	"message": "Argument of type '(values: ClassFormInput) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.\n  Types of parameters 'values' and 'data' are incompatible.\n    Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n      Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 87,
+	"startColumn": 47,
+	"endLineNumber": 87,
+	"endColumn": 55,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 90,
+	"startColumn": 28,
+	"endLineNumber": 90,
+	"endColumn": 35,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"name\">; fieldState: C...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 97,
+	"startColumn": 28,
+	"endLineNumber": 97,
+	"endColumn": 35,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"academicTermId\">; fie...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 107,
+	"startColumn": 28,
+	"endLineNumber": 107,
+	"endColumn": 35,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"subjectId\">; fieldSta...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 123,
+	"startColumn": 28,
+	"endLineNumber": 123,
+	"endColumn": 35,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"teacherId\">; fieldSta...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 133,
+	"startColumn": 28,
+	"endLineNumber": 133,
+	"endColumn": 35,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"gradeLevelId\">; field...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 149,
+	"startColumn": 30,
+	"endLineNumber": 149,
+	"endColumn": 37,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"startTime\">; fieldSta...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 156,
+	"startColumn": 30,
+	"endLineNumber": 156,
+	"endColumn": 37,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"endTime\">; fieldState...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 163,
+	"startColumn": 30,
+	"endLineNumber": 163,
+	"endColumn": 37,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"locationId\">; fieldSt...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/class-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2719",
+	"severity": 8,
+	"message": "Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/form\").Control<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 mor...'. Two different types with this name exist, but they are unrelated.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n      Type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......' is not assignable to type 'import(\"/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/resolvers\").Resolver<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ......'. Two different types with this name exist, but they are unrelated.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; isRecurring: boolean; id?: number | undefined; gradeLevelId?: number | ... 1 more ... | undefined; locationId?: number | ... 1 more ... | undefined; rrule?: string | ... 1 more ... | un...': schoolId, name, academicTermId, subjectId, and 4 more.",
+	"source": "ts",
+	"startLineNumber": 181,
+	"startColumn": 28,
+	"endLineNumber": 181,
+	"endColumn": 35,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; academicTermId: number; subjectId: number; teacherId: number; startTime: string; endTime: string; ... 4 more ...; rrule?: string | ... 1 more ... | undefined; }, \"isRecurring\">; fieldS...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+}]
+
+[{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/recurrence-rule-builder.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'weekday' does not exist on type 'Weekday'.",
+	"source": "ts",
+	"startLineNumber": 127,
+	"startColumn": 53,
+	"endLineNumber": 127,
+	"endColumn": 60,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/recurrence-rule-builder.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'weekday' does not exist on type 'Weekday'.",
+	"source": "ts",
+	"startLineNumber": 128,
+	"startColumn": 53,
+	"endLineNumber": 128,
+	"endColumn": 60,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/recurrence-rule-builder.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'weekday' does not exist on type 'Weekday'.",
+	"source": "ts",
+	"startLineNumber": 129,
+	"startColumn": 53,
+	"endLineNumber": 129,
+	"endColumn": 60,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/recurrence-rule-builder.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'weekday' does not exist on type 'Weekday'.",
+	"source": "ts",
+	"startLineNumber": 130,
+	"startColumn": 53,
+	"endLineNumber": 130,
+	"endColumn": 60,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/recurrence-rule-builder.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'weekday' does not exist on type 'Weekday'.",
+	"source": "ts",
+	"startLineNumber": 131,
+	"startColumn": 53,
+	"endLineNumber": 131,
+	"endColumn": 60,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/recurrence-rule-builder.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'weekday' does not exist on type 'Weekday'.",
+	"source": "ts",
+	"startLineNumber": 132,
+	"startColumn": 53,
+	"endLineNumber": 132,
+	"endColumn": 60,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/recurrence-rule-builder.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'weekday' does not exist on type 'Weekday'.",
+	"source": "ts",
+	"startLineNumber": 133,
+	"startColumn": 53,
+	"endLineNumber": 133,
+	"endColumn": 60,
+	"origin": "extHost1"
+}]
+
+[{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/subject-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2322",
+	"severity": 8,
+	"message": "Type 'Resolver<{ schoolId: number; name: string; departmentId: unknown; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>' is not assignable to type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>'.\n  Types of parameters 'options' and 'options' are incompatible.\n    Type 'ResolverOptions<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>' is not assignable to type 'ResolverOptions<{ schoolId: number; name: string; departmentId: unknown; id?: number | undefined; subjectCode?: string | undefined; }>'.\n      Type 'unknown' is not assignable to type 'number'.",
+	"source": "ts",
+	"startLineNumber": 26,
+	"startColumn": 5,
+	"endLineNumber": 26,
+	"endColumn": 13,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/subject-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2345",
+	"severity": 8,
+	"message": "Argument of type '(values: SubjectFormInput) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.\n  Types of parameters 'values' and 'data' are incompatible.\n    Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }'.\n      Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }': schoolId, name, departmentId",
+	"source": "ts",
+	"startLineNumber": 55,
+	"startColumn": 45,
+	"endLineNumber": 55,
+	"endColumn": 53,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/subject-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2322",
+	"severity": 8,
+	"message": "Type 'Control<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>'.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }> | undefined'.\n      Type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>'.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }': schoolId, name, departmentId",
+	"source": "ts",
+	"startLineNumber": 56,
+	"startColumn": 24,
+	"endLineNumber": 56,
+	"endColumn": 31,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, \"name\">; fieldState: ControllerFieldState; formState: UseFormStateReturn<...>; }) => ReactElement<.....'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/subject-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2322",
+	"severity": 8,
+	"message": "Type 'Control<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>'.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }> | undefined'.\n      Type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>'.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }': schoolId, name, departmentId",
+	"source": "ts",
+	"startLineNumber": 63,
+	"startColumn": 24,
+	"endLineNumber": 63,
+	"endColumn": 31,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, \"subjectCode\">; fieldState: ControllerFieldState; formState: UseFormStateReturn<...>; }) => ReactEle...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/app/(dashboard)/dashboard/(schools)/schools/[schoolId]/(classes)/classes/_components/subject-form-dialog.tsx",
+	"owner": "typescript",
+	"code": "2322",
+	"severity": 8,
+	"message": "Type 'Control<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>'.\n  The types of '_options.resolver' are incompatible between these types.\n    Type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }> | undefined'.\n      Type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, any, { schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }>'.\n        Type 'TFieldValues' is not assignable to type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }'.\n          Type 'FieldValues' is missing the following properties from type '{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }': schoolId, name, departmentId",
+	"source": "ts",
+	"startLineNumber": 70,
+	"startColumn": 24,
+	"endLineNumber": 70,
+	"endColumn": 31,
+	"relatedInformation": [
+		{
+			"startLineNumber": 24,
+			"startColumn": 5,
+			"endLineNumber": 24,
+			"endColumn": 12,
+			"message": "The expected type comes from property 'control' which is declared here on type 'IntrinsicAttributes & { render: ({ field, fieldState, formState, }: { field: ControllerRenderProps<{ schoolId: number; name: string; departmentId: number; id?: number | undefined; subjectCode?: string | undefined; }, \"departmentId\">; fieldState: ControllerFieldState; formState: UseFormStateReturn<...>; }) => ReactEl...'",
+			"resource": "/Users/shoaibrain/Documents/newworld/edux/node_modules/react-hook-form/dist/types/controller.d.ts"
+		}
+	],
+	"origin": "extHost1"
+}]
+
+[{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/lib/dto/class.ts",
+	"owner": "typescript",
+	"code": "2353",
+	"severity": 8,
+	"message": "Object literal may only specify known properties, and 'required_error' does not exist in type '{ error?: string | $ZodErrorMap<$ZodIssueInvalidType<unknown>> | undefined; message?: string | undefined; }'.",
+	"source": "ts",
+	"startLineNumber": 22,
+	"startColumn": 37,
+	"endLineNumber": 22,
+	"endColumn": 51,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/lib/dto/class.ts",
+	"owner": "typescript",
+	"code": "2353",
+	"severity": 8,
+	"message": "Object literal may only specify known properties, and 'required_error' does not exist in type '{ error?: string | $ZodErrorMap<$ZodIssueInvalidType<unknown>> | undefined; message?: string | undefined; }'.",
+	"source": "ts",
+	"startLineNumber": 23,
+	"startColumn": 32,
+	"endLineNumber": 23,
+	"endColumn": 46,
+	"origin": "extHost1"
+},{
+	"resource": "/Users/shoaibrain/Documents/newworld/edux/lib/dto/class.ts",
+	"owner": "typescript",
+	"code": "2353",
+	"severity": 8,
+	"message": "Object literal may only specify known properties, and 'required_error' does not exist in type '{ error?: string | $ZodErrorMap<$ZodIssueInvalidType<unknown>> | undefined; message?: string | undefined; }'.",
+	"source": "ts",
+	"startLineNumber": 24,
+	"startColumn": 32,
+	"endLineNumber": 24,
+	"endColumn": 46,
+	"origin": "extHost1"
+}]

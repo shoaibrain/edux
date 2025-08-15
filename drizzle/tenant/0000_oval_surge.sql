@@ -25,6 +25,29 @@ CREATE TABLE "academic_years" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "class_period_enrollments" (
+	"student_id" integer NOT NULL,
+	"class_period_id" integer NOT NULL,
+	"enrollment_date" date DEFAULT now() NOT NULL,
+	CONSTRAINT "class_period_enrollments_student_id_class_period_id_pk" PRIMARY KEY("student_id","class_period_id")
+);
+--> statement-breakpoint
+CREATE TABLE "class_periods" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"school_id" integer NOT NULL,
+	"academic_term_id" integer NOT NULL,
+	"subject_id" integer NOT NULL,
+	"teacher_id" integer NOT NULL,
+	"grade_level_id" integer,
+	"location_id" integer,
+	"name" text NOT NULL,
+	"rrule" text,
+	"start_time" time NOT NULL,
+	"end_time" time NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "departments" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"school_id" integer NOT NULL,
@@ -68,6 +91,15 @@ CREATE TABLE "guardians" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "guardians_person_id_unique" UNIQUE("person_id")
+);
+--> statement-breakpoint
+CREATE TABLE "locations" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"school_id" integer NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "people" (
@@ -144,6 +176,16 @@ CREATE TABLE "students" (
 	CONSTRAINT "students_student_id_unique" UNIQUE("student_id")
 );
 --> statement-breakpoint
+CREATE TABLE "subjects" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"school_id" integer NOT NULL,
+	"department_id" integer,
+	"name" text NOT NULL,
+	"subject_code" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
@@ -163,11 +205,20 @@ CREATE TABLE "users_to_roles" (
 --> statement-breakpoint
 ALTER TABLE "academic_terms" ADD CONSTRAINT "academic_terms_academic_year_id_academic_years_id_fk" FOREIGN KEY ("academic_year_id") REFERENCES "public"."academic_years"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "academic_years" ADD CONSTRAINT "academic_years_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_period_enrollments" ADD CONSTRAINT "class_period_enrollments_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_period_enrollments" ADD CONSTRAINT "class_period_enrollments_class_period_id_class_periods_id_fk" FOREIGN KEY ("class_period_id") REFERENCES "public"."class_periods"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_periods" ADD CONSTRAINT "class_periods_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_periods" ADD CONSTRAINT "class_periods_academic_term_id_academic_terms_id_fk" FOREIGN KEY ("academic_term_id") REFERENCES "public"."academic_terms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_periods" ADD CONSTRAINT "class_periods_subject_id_subjects_id_fk" FOREIGN KEY ("subject_id") REFERENCES "public"."subjects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_periods" ADD CONSTRAINT "class_periods_teacher_id_people_id_fk" FOREIGN KEY ("teacher_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_periods" ADD CONSTRAINT "class_periods_grade_level_id_grade_levels_id_fk" FOREIGN KEY ("grade_level_id") REFERENCES "public"."grade_levels"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "class_periods" ADD CONSTRAINT "class_periods_location_id_locations_id_fk" FOREIGN KEY ("location_id") REFERENCES "public"."locations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "departments" ADD CONSTRAINT "departments_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "employees" ADD CONSTRAINT "employees_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "employees" ADD CONSTRAINT "employees_department_id_departments_id_fk" FOREIGN KEY ("department_id") REFERENCES "public"."departments"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "grade_levels" ADD CONSTRAINT "grade_levels_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guardians" ADD CONSTRAINT "guardians_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "locations" ADD CONSTRAINT "locations_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "people" ADD CONSTRAINT "people_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "roles_to_permissions" ADD CONSTRAINT "roles_to_permissions_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "roles_to_permissions" ADD CONSTRAINT "roles_to_permissions_permission_id_permissions_id_fk" FOREIGN KEY ("permission_id") REFERENCES "public"."permissions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -175,6 +226,8 @@ ALTER TABLE "student_guardians" ADD CONSTRAINT "student_guardians_student_id_stu
 ALTER TABLE "student_guardians" ADD CONSTRAINT "student_guardians_guardian_id_guardians_id_fk" FOREIGN KEY ("guardian_id") REFERENCES "public"."guardians"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "students" ADD CONSTRAINT "students_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "students" ADD CONSTRAINT "students_current_grade_level_id_grade_levels_id_fk" FOREIGN KEY ("current_grade_level_id") REFERENCES "public"."grade_levels"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subjects" ADD CONSTRAINT "subjects_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subjects" ADD CONSTRAINT "subjects_department_id_departments_id_fk" FOREIGN KEY ("department_id") REFERENCES "public"."departments"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users_to_roles" ADD CONSTRAINT "users_to_roles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users_to_roles" ADD CONSTRAINT "users_to_roles_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -183,4 +236,6 @@ CREATE UNIQUE INDEX "unq_year_term" ON "academic_terms" USING btree ("academic_y
 CREATE UNIQUE INDEX "unq_school_year" ON "academic_years" USING btree ("school_id","year_name");--> statement-breakpoint
 CREATE UNIQUE INDEX "unq_school_dept" ON "departments" USING btree ("school_id","name");--> statement-breakpoint
 CREATE UNIQUE INDEX "unq_school_grade" ON "grade_levels" USING btree ("school_id","name");--> statement-breakpoint
-CREATE UNIQUE INDEX "unq_school_order" ON "grade_levels" USING btree ("school_id","level_order");
+CREATE UNIQUE INDEX "unq_school_order" ON "grade_levels" USING btree ("school_id","level_order");--> statement-breakpoint
+CREATE UNIQUE INDEX "unq_school_location" ON "locations" USING btree ("school_id","name");--> statement-breakpoint
+CREATE UNIQUE INDEX "unq_school_subject" ON "subjects" USING btree ("school_id","name");
