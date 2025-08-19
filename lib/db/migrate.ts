@@ -16,7 +16,7 @@ export async function runTenantMigrations(connectionString: string) {
     log.info('Applying tenant schema from SQL snapshot...');
     
     // Construct the path to the schema file. This assumes the file is at the root of the project.
-    const schemaPath = path.join(process.cwd(), 'drizzle', 'tenant', '0000_classy_thunderbolt_ross.sql');
+    const schemaPath = path.join(process.cwd(), 'drizzle', 'tenant', '0000_gifted_toad_men.sql');
     const schemaSql = await fs.readFile(schemaPath, 'utf-8');
 
     // Execute the entire schema SQL as a single query

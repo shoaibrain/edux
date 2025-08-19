@@ -1,4 +1,8 @@
-export type EventType = 'CLASS_PERIOD' | 'SCHOOL_EVENT' | 'MEETING' | 'EXAM' | 'HOLIDAY';
+export type EventType = 'class_period' | 'school_event' | 'meeting' | 'exam' | 'holiday' | 'field_trip' | 'parent_conference';
+export type EventStatus = 'scheduled' | 'cancelled' | 'completed' | 'postponed';
+export type AttendeeRole = 'organizer' | 'attendee' | 'optional' | 'required';
+export type AttendanceStatus = 'invited' | 'confirmed' | 'declined' | 'tentative';
+export type ResourceType = 'room' | 'equipment' | 'vehicle' | 'other';
 
 export interface BaseEvent {
   id: string;
@@ -7,52 +11,66 @@ export interface BaseEvent {
   startTime: Date;
   endTime: Date;
   eventType: EventType;
-  metadata: Record<string, any>;
+  timezone: string;
+  isRecurring: boolean;
+  status: EventStatus;
+  maxAttendees?: number;
+  requiresRegistration: boolean;
+  metadata: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
   tenantId: string;
 }
 
-export interface ClassPeriodEvent extends BaseEvent {
-  eventType: 'CLASS_PERIOD';
-  metadata: {
-    subjectId: string;
-    teacherId: string;
-    roomId: string;
-    gradeLevel: string;
-    maxStudents: number;
-    curriculum?: string;
-  };
-}
-
-export interface SchoolEvent extends BaseEvent {
-  eventType: 'SCHOOL_EVENT';
-  metadata: {
-    eventCategory: 'ACADEMIC' | 'SOCIAL' | 'ADMINISTRATIVE' | 'SPORTS';
-    targetAudience: string[];
-    requiresRegistration: boolean;
-    maxParticipants?: number;
-    location?: string;
-  };
-}
-
 export interface RecurrenceRule {
   id: string;
-  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-  interval: number; // every X days/weeks/months/years
-  weekdays?: number[]; // 0-6 (Sunday-Saturday)
-  monthDay?: number; // 1-31
-  monthWeek?: number; // 1-5 (first week, second week, etc.)
-  monthWeekday?: number; // 0-6 (Sunday-Saturday)
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;
+  weekdays?: number[];
+  monthDay?: number;
+  monthWeek?: number;
+  monthWeekday?: number;
   endDate?: Date;
   occurrenceCount?: number;
-  exceptions?: Date[]; // dates to exclude
+  exceptions?: Date[];
+  rruleString: string;
 }
 
 export interface ScheduledEvent extends BaseEvent {
   recurrenceRule?: RecurrenceRule;
-  isRecurring: boolean;
-  parentEventId?: string; // for recurring event instances
-  status: 'SCHEDULED' | 'CANCELLED' | 'COMPLETED' | 'POSTPONED';
+  parentEventId?: string;
+  instances?: EventInstance[];
+  attendees?: EventAttendee[];
+  resources?: EventResource[];
+}
+
+export interface EventInstance {
+  id: string;
+  eventId: string;
+  startTime: Date;
+  endTime: Date;
+  status: EventStatus;
+  notes?: string;
+}
+
+export interface EventAttendee {
+  id: string;
+  eventId: string;
+  personId: string;
+  role: AttendeeRole;
+  status: AttendanceStatus;
+  registeredAt?: Date;
+  notes?: string;
+}
+
+export interface EventResource {
+  id: string;
+  eventId: string;
+  resourceType: ResourceType;
+  resourceId?: string;
+  resourceName: string;
+  quantity: number;
+  notes?: string;
 }

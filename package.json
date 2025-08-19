@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:scheduler": "tsx ./scripts/test-scheduler.ts"
+    "test:scheduler": "tsx ./scripts/test-scheduler-complete.ts",
+    "db:generate-main": "dotenv -e .env.local -- drizzle-kit generate",
+    "db:migrate-main": "dotenv -e .env.local -- drizzle-kit migrate",
+    "db:generate-tenant": "dotenv -e .env.local -- drizzle-kit generate --config=drizzle.tenant.config.ts",
+    "db:migrate-tenant": "dotenv -e .env.local -- tsx ./scripts/migrate-tenant.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",

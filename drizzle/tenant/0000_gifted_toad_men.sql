@@ -1,7 +1,13 @@
-CREATE TYPE "public"."attendance_status" AS ENUM('present', 'absent', 'tardy', 'excused');--> statement-breakpoint
+CREATE TYPE "public"."attendance_status" AS ENUM('invited', 'confirmed', 'declined', 'tentative');--> statement-breakpoint
+CREATE TYPE "public"."attendee_role" AS ENUM('organizer', 'attendee', 'optional', 'required');--> statement-breakpoint
+CREATE TYPE "public"."event_status" AS ENUM('scheduled', 'cancelled', 'completed', 'postponed');--> statement-breakpoint
+CREATE TYPE "public"."event_type" AS ENUM('class_period', 'school_event', 'meeting', 'exam', 'holiday', 'field_trip', 'parent_conference');--> statement-breakpoint
+CREATE TYPE "public"."instance_status" AS ENUM('scheduled', 'cancelled', 'completed', 'postponed');--> statement-breakpoint
 CREATE TYPE "public"."invoice_status" AS ENUM('draft', 'open', 'paid', 'void', 'past_due');--> statement-breakpoint
 CREATE TYPE "public"."payment_method" AS ENUM('credit_card', 'bank_transfer', 'cash', 'check', 'scholarship');--> statement-breakpoint
 CREATE TYPE "public"."person_type" AS ENUM('student', 'guardian', 'staff');--> statement-breakpoint
+CREATE TYPE "public"."recurrence_frequency" AS ENUM('daily', 'weekly', 'monthly', 'yearly');--> statement-breakpoint
+CREATE TYPE "public"."resource_type" AS ENUM('room', 'equipment', 'vehicle', 'other');--> statement-breakpoint
 CREATE TYPE "public"."schedule_type" AS ENUM('recurring_class', 'one_time_event');--> statement-breakpoint
 CREATE TABLE "academic_terms" (
 	"id" serial PRIMARY KEY NOT NULL,
@@ -73,6 +79,62 @@ CREATE TABLE "employees" (
 	CONSTRAINT "employees_employee_id_unique" UNIQUE("employee_id")
 );
 --> statement-breakpoint
+CREATE TABLE "event_attendees" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"event_id" integer NOT NULL,
+	"person_id" integer NOT NULL,
+	"role" "attendee_role",
+	"status" "attendance_status",
+	"registered_at" timestamp with time zone,
+	"notes" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "event_instances" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"event_id" integer NOT NULL,
+	"start_time" timestamp with time zone NOT NULL,
+	"end_time" timestamp with time zone NOT NULL,
+	"status" "instance_status",
+	"notes" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "event_resources" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"event_id" integer NOT NULL,
+	"resource_type" "resource_type",
+	"resource_id" integer,
+	"resource_name" text NOT NULL,
+	"quantity" integer DEFAULT 1 NOT NULL,
+	"notes" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "events" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"school_id" integer NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"event_type" "event_type" NOT NULL,
+	"start_time" timestamp with time zone NOT NULL,
+	"end_time" timestamp with time zone NOT NULL,
+	"timezone" text DEFAULT 'UTC' NOT NULL,
+	"is_recurring" boolean DEFAULT false NOT NULL,
+	"recurrence_rule_id" integer,
+	"parent_event_id" integer,
+	"status" "event_status" NOT NULL,
+	"max_attendees" integer,
+	"requires_registration" boolean DEFAULT false NOT NULL,
+	"metadata" jsonb,
+	"created_by" integer NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "grade_levels" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"school_id" integer NOT NULL,
@@ -126,6 +188,24 @@ CREATE TABLE "permissions" (
 	"description" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "permissions_name_unique" UNIQUE("name")
+);
+--> statement-breakpoint
+CREATE TABLE "recurrence_rules" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"school_id" integer NOT NULL,
+	"name" text NOT NULL,
+	"frequency" "recurrence_frequency" NOT NULL,
+	"interval" integer DEFAULT 1 NOT NULL,
+	"weekdays" integer[],
+	"month_day" integer,
+	"month_week" integer,
+	"month_weekday" integer,
+	"end_date" timestamp with time zone,
+	"occurrence_count" integer,
+	"exceptions" timestamp with time zone[],
+	"rrule_string" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "roles" (
@@ -216,10 +296,18 @@ ALTER TABLE "class_periods" ADD CONSTRAINT "class_periods_location_id_locations_
 ALTER TABLE "departments" ADD CONSTRAINT "departments_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "employees" ADD CONSTRAINT "employees_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "employees" ADD CONSTRAINT "employees_department_id_departments_id_fk" FOREIGN KEY ("department_id") REFERENCES "public"."departments"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_attendees" ADD CONSTRAINT "event_attendees_event_id_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_attendees" ADD CONSTRAINT "event_attendees_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_instances" ADD CONSTRAINT "event_instances_event_id_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_resources" ADD CONSTRAINT "event_resources_event_id_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_recurrence_rule_id_recurrence_rules_id_fk" FOREIGN KEY ("recurrence_rule_id") REFERENCES "public"."recurrence_rules"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_created_by_people_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "grade_levels" ADD CONSTRAINT "grade_levels_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guardians" ADD CONSTRAINT "guardians_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "locations" ADD CONSTRAINT "locations_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "people" ADD CONSTRAINT "people_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "recurrence_rules" ADD CONSTRAINT "recurrence_rules_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "roles_to_permissions" ADD CONSTRAINT "roles_to_permissions_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "roles_to_permissions" ADD CONSTRAINT "roles_to_permissions_permission_id_permissions_id_fk" FOREIGN KEY ("permission_id") REFERENCES "public"."permissions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "student_guardians" ADD CONSTRAINT "student_guardians_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

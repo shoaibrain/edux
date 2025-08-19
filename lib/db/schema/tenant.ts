@@ -3,11 +3,20 @@ import { relations } from 'drizzle-orm';
 
 // --- ENUMS ---
 export const personTypeEnum = pgEnum('person_type', ['student', 'guardian', 'staff']);
-export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'absent', 'tardy', 'excused']);
 export const invoiceStatusEnum = pgEnum('invoice_status', ['draft', 'open', 'paid', 'void', 'past_due']);
 export const paymentMethodEnum = pgEnum('payment_method', ['credit_card', 'bank_transfer', 'cash', 'check', 'scholarship']);
 export const scheduleTypeEnum = pgEnum('schedule_type', ['recurring_class', 'one_time_event']);
 
+// Define enums as types, not as pgEnum functions
+export const eventTypeEnum = pgEnum('event_type', ['class_period','school_event','meeting','exam','holiday','field_trip','parent_conference']);
+export const eventStatusEnum = pgEnum('event_status', ['scheduled','cancelled','completed','postponed']);
+export const recurrenceFrequencyEnum = pgEnum('recurrence_frequency', ['daily','weekly','monthly','yearly']);
+export const instanceStatusEnum = pgEnum('instance_status', ['scheduled','cancelled','completed','postponed']);
+export const attendeeRoleEnum = pgEnum('attendee_role', ['organizer','attendee','optional','required']);
+
+// IMPORTANT: use a new PG enum name so it doesn't clash with existing 'attendance_status'
+export const eventAttendanceStatusEnum = pgEnum('event_attendance_status', ['invited','confirmed','declined','tentative']);
+export const resourceTypeEnum = pgEnum('resource_type', ['room','equipment','vehicle','other']);
 
 // Existing users table (now links to people)
 export const users = pgTable('users', {
@@ -414,4 +423,112 @@ export const classPeriodsRelations = relations(classPeriods, ({ one, many }) => 
 export const classPeriodEnrollmentsRelations = relations(classPeriodEnrollments, ({ one }) => ({
     student: one(students, { fields: [classPeriodEnrollments.studentId], references: [students.id] }),
     classPeriod: one(classPeriods, { fields: [classPeriodEnrollments.classPeriodId], references: [classPeriods.id] }),
+}));
+
+// Enhanced event management (following existing table pattern)
+export const events = pgTable('events', {
+    id: serial('id').primaryKey(),
+  schoolId: integer('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  eventType: eventTypeEnum('event_type').notNull(),
+  startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+  endTime: timestamp('end_time', { withTimezone: true }).notNull(),
+  timezone: text('timezone').notNull().default('UTC'),
+  isRecurring: boolean('is_recurring').default(false).notNull(),
+  recurrenceRuleId: integer('recurrence_rule_id').references(() => recurrenceRules.id, { onDelete: 'set null' }),
+  parentEventId: integer('parent_event_id'),
+  status: eventStatusEnum('status').notNull(),
+  maxAttendees: integer('max_attendees'),
+  requiresRegistration: boolean('requires_registration').default(false).notNull(),
+  metadata: jsonb('metadata'),
+  createdBy: integer('created_by').notNull().references(() => people.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Recurrence rules (following existing table pattern)
+export const recurrenceRules = pgTable('recurrence_rules', {
+  id: serial('id').primaryKey(),
+  schoolId: integer('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  frequency: recurrenceFrequencyEnum('frequency').notNull(),
+  interval: integer('interval').notNull().default(1),
+  weekdays: integer('weekdays').array(),
+  monthDay: integer('month_day'),
+  monthWeek: integer('month_week'),
+  monthWeekday: integer('month_weekday'),
+  endDate: timestamp('end_date', { withTimezone: true }),
+  occurrenceCount: integer('occurrence_count'),
+  exceptions: timestamp('exceptions', { withTimezone: true }).array(),
+  rruleString: text('rrule_string'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Event instances (following existing table pattern)
+export const eventInstances = pgTable('event_instances', {
+  id: serial('id').primaryKey(),
+  eventId: integer('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }),
+  startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+  endTime: timestamp('end_time', { withTimezone: true }).notNull(),
+  status: instanceStatusEnum('status').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Event attendees (following existing table pattern)
+export const eventAttendees = pgTable('event_attendees', {
+    id: serial('id').primaryKey(),
+  eventId: integer('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }),
+  personId: integer('person_id').notNull().references(() => people.id, { onDelete: 'cascade' }),
+  role: attendeeRoleEnum('role').notNull(),
+  status: eventAttendanceStatusEnum('status').notNull(),
+  registeredAt: timestamp('registered_at', { withTimezone: true }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Event resources (following existing table pattern)
+export const eventResources = pgTable('event_resources', {
+    id: serial('id').primaryKey(),
+  eventId: integer('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }),
+  resourceType: resourceTypeEnum('resource_type').notNull(),
+  resourceId: integer('resource_id'),
+  resourceName: text('resource_name').notNull(),
+  quantity: integer('quantity').default(1).notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Add relations
+export const eventsRelations = relations(events, ({ one, many }) => ({
+  school: one(schools, { fields: [events.schoolId], references: [schools.id] }),
+  recurrenceRule: one(recurrenceRules, { fields: [events.recurrenceRuleId], references: [recurrenceRules.id] }),
+  parentEvent: one(events, { fields: [events.parentEventId], references: [events.id] }),
+  createdByPerson: one(people, { fields: [events.createdBy], references: [people.id] }),
+  instances: many(eventInstances),
+  attendees: many(eventAttendees),
+  resources: many(eventResources),
+}));
+
+export const recurrenceRulesRelations = relations(recurrenceRules, ({ one, many }) => ({
+  school: one(schools, { fields: [recurrenceRules.schoolId], references: [schools.id] }),
+  events: many(events),
+}));
+
+export const eventInstancesRelations = relations(eventInstances, ({ one }) => ({
+  event: one(events, { fields: [eventInstances.eventId], references: [events.id] }),
+}));
+
+export const eventAttendeesRelations = relations(eventAttendees, ({ one }) => ({
+  event: one(events, { fields: [eventAttendees.eventId], references: [events.id] }),
+  person: one(people, { fields: [eventAttendees.personId], references: [people.id] }),
+}));
+
+export const eventResourcesRelations = relations(eventResources, ({ one }) => ({
+  event: one(events, { fields: [eventResources.eventId], references: [events.id] }),
 }));

@@ -1,6 +1,18 @@
 import { v4 as uuidv4 } from 'uuid';
-import { BaseEvent, ScheduledEvent, RecurrenceRule, EventType } from '../../types/events';
+import {
+  ScheduledEvent,
+  EventInstance,
+  EventAttendee,
+  EventResource,
+  RecurrenceRule,
+  EventType,
+  EventStatus,
+  AttendeeRole,
+  AttendanceStatus,
+  ResourceType
+} from '../../types/events';
 import { RecurrenceModel } from './models/recurrence.model';
+import log from '@/lib/logger';
 
 export interface CreateEventOptions {
   title: string;
@@ -8,83 +20,140 @@ export interface CreateEventOptions {
   startTime: Date;
   endTime: Date;
   eventType: EventType;
-  metadata: Record<string, any>;
+  timezone: string;
+  maxAttendees?: number;
+  requiresRegistration: boolean;
+  metadata: Record<string, unknown>;
   createdBy: string;
   tenantId: string;
   recurrenceRule?: RecurrenceRule;
-  timezone?: string; // ISO timezone string (e.g., 'America/New_York')
+  attendees?: Array<{
+    personId: string;
+    role: AttendeeRole;
+    status: AttendanceStatus;
+  }>;
+  resources?: Array<{
+    resourceType: ResourceType;
+    resourceId?: string;
+    resourceName: string;
+    quantity: number;
+  }>;
 }
 
 export interface ScheduleConflict {
-  type: 'TIME_OVERLAP' | 'RESOURCE_CONFLICT' | 'CONSTRAINT_VIOLATION';
+  type: 'TIME_OVERLAP' | 'RESOURCE_CONFLICT' | 'CONSTRAINT_VIOLATION' | 'ATTENDEE_CONFLICT';
   message: string;
   conflictingEventId?: string;
   severity: 'WARNING' | 'ERROR';
+  details?: Record<string, unknown>;
 }
 
+// Fix the 'any' types by using proper interfaces
 export class SchedulerService {
   private events: Map<string, ScheduledEvent> = new Map();
+  private eventInstances: Map<string, EventInstance> = new Map();
+  private eventAttendees: Map<string, EventAttendee> = new Map();
+  private eventResources: Map<string, EventResource> = new Map();
 
   /**
-   * Create a new event (one-time or recurring)
+   * Create a new event with advanced features
    */
   async createEvent(options: CreateEventOptions): Promise<ScheduledEvent> {
-    // Validate basic event data
-    this.validateEventData(options);
+    const eventId = uuidv4();
+    
+    try {
+      log.info(`Creating new event: ${options.title} (${options.eventType}) - ID: ${eventId}`);
 
-    // Check for conflicts
-    const conflicts = await this.checkConflicts(options);
-    if (conflicts.some(c => c.severity === 'ERROR')) {
-      throw new Error(`Cannot create event due to conflicts: ${conflicts.map(c => c.message).join(', ')}`);
+      // Validate basic event data
+      this.validateEventData(options);
+
+      // Check for conflicts
+      const conflicts = await this.checkConflicts(options);
+      if (conflicts.some(c => c.severity === 'ERROR')) {
+        log.warn('Event creation blocked due to conflicts' );
+        throw new Error(`Cannot create event due to conflicts: ${conflicts.map(c => c.message).join(', ')}`);
+      }
+
+      // Log warnings if any
+      const warnings = conflicts.filter(c => c.severity === 'WARNING');
+      if (warnings.length > 0) {
+        log.warn('Event created with warnings');
+      }
+
+      const event: ScheduledEvent = {
+        id: eventId,
+        title: options.title,
+        description: options.description,
+        startTime: options.startTime,
+        endTime: options.endTime,
+        eventType: options.eventType,
+        timezone: options.timezone,
+        isRecurring: !!options.recurrenceRule,
+        status: 'scheduled',
+        maxAttendees: options.maxAttendees,
+        requiresRegistration: options.requiresRegistration,
+        metadata: options.metadata,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: options.createdBy,
+        tenantId: options.tenantId,
+        recurrenceRule: options.recurrenceRule,
+      };
+
+      // Store the main event
+      this.events.set(eventId, event);
+
+      // Handle recurring events
+      if (options.recurrenceRule) {
+        await this.createRecurringInstances(event, options.recurrenceRule);
+      }
+
+      // Add attendees
+      if (options.attendees) {
+        await this.addEventAttendees(eventId, options.attendees);
+      }
+
+      // Add resources
+      if (options.resources) {
+        await this.addEventResources(eventId, options.resources);
+      }
+
+      log.info(`Event created successfully | ${JSON.stringify({ eventId, isRecurring: event.isRecurring })}`);
+      return event;
+
+    } catch (error) {
+      log.error(`Failed to create event | ${JSON.stringify({ eventId, error: error instanceof Error ? error.message : 'Unknown error' })}`);
+      throw error;
     }
+  }
 
-    const event: ScheduledEvent = {
-      id: uuidv4(),
-      title: options.title,
-      description: options.description,
-      startTime: options.startTime,
-      endTime: options.endTime,
-      eventType: options.eventType,
-      metadata: {
-        ...options.metadata,
-        timezone: options.timezone || 'UTC'
-      },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: options.createdBy,
-      tenantId: options.tenantId,
-      recurrenceRule: options.recurrenceRule,
-      isRecurring: !!options.recurrenceRule,
-      status: 'SCHEDULED',
-    };
+  /**
+   * Create recurring event instances
+   */
+  private async createRecurringInstances(event: ScheduledEvent, recurrenceRule: RecurrenceRule): Promise<void> {
+    try {
+      log.info(`Creating recurring instances | ${JSON.stringify({ eventId: event.id, recurrenceRule: recurrenceRule.name })}`);
 
-    // If recurring, generate all instances
-    if (options.recurrenceRule) {
       const occurrences = RecurrenceModel.generateOccurrences(
-        options.startTime,
-        new Date(options.startTime.getTime() + 365 * 24 * 60 * 60 * 1000), // 1 year ahead
-        options.recurrenceRule
+        event.startTime,
+        new Date(event.startTime.getTime() + 365 * 24 * 60 * 60 * 1000), // 1 year ahead
+        recurrenceRule
       );
 
-      // Store the parent event
-      this.events.set(event.id, event);
-
       // Create individual instances for each occurrence
-      occurrences.forEach((occurrenceDate, index) => {
+      occurrences.forEach((occurrenceDate) => {
+        const instanceId = uuidv4();
+        
         // Preserve the exact time of day from the original event
-        const originalStartTime = options.startTime;
-        const originalEndTime = options.endTime;
+        const startHours = event.startTime.getHours();
+        const startMinutes = event.startTime.getMinutes();
+        const startSeconds = event.startTime.getSeconds();
+        const startMilliseconds = event.startTime.getMilliseconds();
         
-        // Get the time components (hours, minutes, seconds, milliseconds)
-        const startHours = originalStartTime.getHours();
-        const startMinutes = originalStartTime.getMinutes();
-        const startSeconds = originalStartTime.getSeconds();
-        const startMilliseconds = originalStartTime.getMilliseconds();
-        
-        const endHours = originalEndTime.getHours();
-        const endMinutes = originalEndTime.getMinutes();
-        const endSeconds = originalEndTime.getSeconds();
-        const endMilliseconds = originalEndTime.getMilliseconds();
+        const endHours = event.endTime.getHours();
+        const endMinutes = event.endTime.getMinutes();
+        const endSeconds = event.endTime.getSeconds();
+        const endMilliseconds = event.endTime.getMilliseconds();
         
         // Create new start and end times for this occurrence
         const newStartTime = new Date(occurrenceDate);
@@ -93,21 +162,80 @@ export class SchedulerService {
         const newEndTime = new Date(occurrenceDate);
         newEndTime.setHours(endHours, endMinutes, endSeconds, endMilliseconds);
 
-        const instance: ScheduledEvent = {
-          ...event,
-          id: uuidv4(),
+        const instance = {
+          id: instanceId,
+          eventId: event.id,
           startTime: newStartTime,
           endTime: newEndTime,
-          parentEventId: event.id,
-          isRecurring: false,
+          status: 'scheduled' as EventStatus,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         };
-        this.events.set(instance.id, instance);
-      });
-    } else {
-      this.events.set(event.id, event);
-    }
 
-    return event;
+        this.eventInstances.set(instanceId, instance);
+      });
+
+      log.info(`Recurring instances created | ${JSON.stringify({ eventId: event.id, instanceCount: occurrences.length })}`);
+
+    } catch (error) {
+      log.error(`Failed to create recurring instances | ${JSON.stringify({ eventId: event.id, error: error instanceof Error ? error.message : 'Unknown error' })}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Add attendees to an event
+   */
+  private async addEventAttendees(eventId: string, attendees: Array<{ personId: string; role: AttendeeRole; status: AttendanceStatus }>): Promise<void> {
+    try {
+      attendees.forEach(attendee => {
+        const attendeeId = uuidv4();
+        const eventAttendee = {
+          id: attendeeId,
+          eventId,
+          personId: attendee.personId,
+          role: attendee.role,
+          status: attendee.status,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        this.eventAttendees.set(attendeeId, eventAttendee);
+      });
+
+      log.info(`Event attendees added | ${JSON.stringify({ eventId, attendeeCount: attendees.length })}`);
+
+    } catch (error) {
+      log.error(`Failed to add event attendees | ${JSON.stringify({ eventId, error: error instanceof Error ? error.message : 'Unknown error' })}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Add resources to an event
+   */
+  private async addEventResources(eventId: string, resources: Array<{ resourceType: ResourceType; resourceId?: string; resourceName: string; quantity: number }>): Promise<void> {
+    try {
+      resources.forEach(resource => {
+        const resourceId = uuidv4();
+        const eventResource = {
+          id: resourceId,
+          eventId,
+          resourceType: resource.resourceType,
+          resourceId: resource.resourceId,
+          resourceName: resource.resourceName,
+          quantity: resource.quantity,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        this.eventResources.set(resourceId, eventResource);
+      });
+
+      log.info(`Event resources added | ${JSON.stringify({ eventId, resourceCount: resources.length })}`);
+
+    } catch (error) {
+      log.error(`Failed to add event resources | ${JSON.stringify({ eventId, error: error instanceof Error ? error.message : 'Unknown error' })}`);
+      throw error;
+    }
   }
 
   /**
@@ -158,62 +286,121 @@ export class SchedulerService {
 
     // If it's a recurring event, delete all instances
     if (event.isRecurring) {
-      Array.from(this.events.values())
-        .filter(e => e.parentEventId === eventId)
-        .forEach(e => this.events.delete(e.id));
+      Array.from(this.eventInstances.values())
+        .filter(e => e.eventId === eventId)
+        .forEach(e => this.eventInstances.delete(e.id));
     }
+
+    // Delete attendees
+    Array.from(this.eventAttendees.values())
+      .filter(e => e.eventId === eventId)
+      .forEach(e => this.eventAttendees.delete(e.id));
+
+    // Delete resources
+    Array.from(this.eventResources.values())
+      .filter(e => e.eventId === eventId)
+      .forEach(e => this.eventResources.delete(e.id));
 
     this.events.delete(eventId);
   }
 
   /**
-   * Check for scheduling conflicts
+   * Enhanced conflict detection
    */
   private async checkConflicts(options: CreateEventOptions): Promise<ScheduleConflict[]> {
     const conflicts: ScheduleConflict[] = [];
 
-    // Check time overlap with existing events
-    const overlappingEvents = Array.from(this.events.values()).filter(event => 
-      event.tenantId === options.tenantId &&
-      event.status === 'SCHEDULED' &&
-      this.hasTimeOverlap(
-        options.startTime,
-        options.endTime,
-        event.startTime,
-        event.endTime
-      )
-    );
+    try {
+      // Check time overlap with existing events
+      const overlappingEvents = Array.from(this.events.values()).filter(event => 
+        event.tenantId === options.tenantId &&
+        event.status === 'scheduled' &&
+        this.hasTimeOverlap(
+          options.startTime,
+          options.endTime,
+          event.startTime,
+          event.endTime
+        )
+      );
 
-    if (overlappingEvents.length > 0) {
-      conflicts.push({
-        type: 'TIME_OVERLAP',
-        message: `Event overlaps with ${overlappingEvents.length} existing event(s)`,
-        conflictingEventId: overlappingEvents[0].id,
-        severity: 'ERROR',
-      });
+      if (overlappingEvents.length > 0) {
+        conflicts.push({
+          type: 'TIME_OVERLAP',
+          message: `Event overlaps with ${overlappingEvents.length} existing event(s)`,
+          conflictingEventId: overlappingEvents[0].id,
+          severity: 'ERROR',
+          details: { overlappingEventIds: overlappingEvents.map(e => e.id) }
+        });
+      }
+
+      // Check resource conflicts
+      if (options.resources) {
+        const resourceConflicts = await this.checkResourceConflicts(options);
+        conflicts.push(...resourceConflicts);
+      }
+
+      // Check attendee conflicts
+      if (options.attendees) {
+        const attendeeConflicts = await this.checkAttendeeConflicts(options);
+        conflicts.push(...attendeeConflicts);
+      }
+
+      // Check business hours constraint
+      const startHour = options.startTime.getHours();
+      const endHour = options.endTime.getHours();
+      if (startHour < 8 || endHour > 18) {
+        conflicts.push({
+          type: 'CONSTRAINT_VIOLATION',
+          message: 'Events must be scheduled within business hours (8 AM - 6 PM)',
+          severity: 'WARNING',
+        });
+      }
+
+      // Check event duration constraint
+      const durationHours = (options.endTime.getTime() - options.startTime.getTime()) / (1000 * 60 * 60);
+      if (durationHours > 8) {
+        conflicts.push({
+          type: 'CONSTRAINT_VIOLATION',
+          message: 'Event duration cannot exceed 8 hours',
+          severity: 'ERROR',
+        });
+      }
+
+    } catch (error) {
+      log.error(`Error during conflict detection | ${JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' })}`);
+      throw error;
     }
 
-    // Check business hours (8 AM - 6 PM) in the event's timezone
-    const startHour = options.startTime.getHours();
-    const endHour = options.endTime.getHours();
-    if (startHour < 8 || endHour > 18) {
-      conflicts.push({
-        type: 'CONSTRAINT_VIOLATION',
-        message: 'Events must be scheduled within business hours (8 AM - 6 PM)',
-        severity: 'WARNING',
-      });
-    }
+    return conflicts;
+  }
 
-    // Check event duration (max 8 hours)
-    const durationHours = (options.endTime.getTime() - options.startTime.getTime()) / (1000 * 60 * 60);
-    if (durationHours > 8) {
-      conflicts.push({
-        type: 'CONSTRAINT_VIOLATION',
-        message: 'Event duration cannot exceed 8 hours',
-        severity: 'ERROR',
-      });
+  /**
+   * Check resource conflicts
+   */
+  private async checkResourceConflicts(options: CreateEventOptions): Promise<ScheduleConflict[]> {
+    const conflicts: ScheduleConflict[] = [];
+    
+    // Basic resource conflict check
+    if (options.resources) {
+      // Check for room conflicts, equipment conflicts, etc.
+      // Implementation placeholder
     }
+    
+    return conflicts;
+  }
 
+  /**
+   * Check attendee conflicts
+   */
+  private async checkAttendeeConflicts(options: CreateEventOptions): Promise<ScheduleConflict[]> {
+    const conflicts: ScheduleConflict[] = [];
+    
+    // Basic attendee conflict check
+    if (options.attendees) {
+      // Check for schedule conflicts, availability, etc.
+      // Implementation placeholder
+    }
+    
     return conflicts;
   }
 
@@ -267,8 +454,8 @@ export class SchedulerService {
       });
       
       return `${startTime} - ${endTime}`;
-    } catch (error) {
-      // Fallback to UTC if timezone is invalid
+    } catch {
+      // Remove unused error parameter
       return `${event.startTime.toISOString()} - ${event.endTime.toISOString()}`;
     }
   }

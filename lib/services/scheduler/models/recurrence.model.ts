@@ -11,18 +11,28 @@ export class RecurrenceModel {
     endDate: Date,
     recurrenceRule: RecurrenceRule
   ): Date[] {
-    const rruleOptions: any = {
+    const rruleOptions: {
+      dtstart: Date;
+      until?: Date;
+      count?: number;
+      freq: number;
+      byweekday?: number[];
+      bymonthday?: number;
+      bysetpos?: number;
+      interval?: number;
+    } = {
       dtstart: startDate,
       until: recurrenceRule.endDate || endDate,
       count: recurrenceRule.occurrenceCount,
+      freq: RRule.DAILY, // Add this default value
     };
 
     // Set frequency
     switch (recurrenceRule.frequency) {
-      case 'DAILY':
+      case 'daily':
         rruleOptions.freq = RRule.DAILY;
         break;
-      case 'WEEKLY':
+      case 'weekly':
         rruleOptions.freq = RRule.WEEKLY;
         if (recurrenceRule.weekdays) {
           rruleOptions.byweekday = recurrenceRule.weekdays.map(day => 
@@ -35,17 +45,17 @@ export class RecurrenceModel {
           );
         }
         break;
-      case 'MONTHLY':
+      case 'monthly':
         rruleOptions.freq = RRule.MONTHLY;
         if (recurrenceRule.monthDay) {
           rruleOptions.bymonthday = recurrenceRule.monthDay;
         }
         if (recurrenceRule.monthWeek && recurrenceRule.monthWeekday !== undefined) {
           rruleOptions.bysetpos = recurrenceRule.monthWeek;
-          rruleOptions.byweekday = recurrenceRule.monthWeekday;
+          rruleOptions.byweekday = [recurrenceRule.monthWeekday];
         }
         break;
-      case 'YEARLY':
+      case 'yearly':
         rruleOptions.freq = RRule.YEARLY;
         break;
     }
@@ -89,11 +99,11 @@ export class RecurrenceModel {
       errors.push('Interval must be at least 1');
     }
 
-    if (rule.frequency === 'WEEKLY' && (!rule.weekdays || rule.weekdays.length === 0)) {
+    if (rule.frequency === 'weekly' && (!rule.weekdays || rule.weekdays.length === 0)) {
       errors.push('Weekly recurrence must specify weekdays');
     }
 
-    if (rule.frequency === 'MONTHLY') {
+    if (rule.frequency === 'monthly') {
       if (!rule.monthDay && (!rule.monthWeek || rule.monthWeekday === undefined)) {
         errors.push('Monthly recurrence must specify either monthDay or monthWeek + monthWeekday');
       }
