@@ -6,12 +6,12 @@ export const ClassFormSchema = z.object({
   id: z.number().optional(),
   schoolId: z.number(),
   name: z.string().min(1, "Class name is required."),
-  academicTermId: z.coerce.number().min(1, "Academic Term is required."),
-  subjectId: z.coerce.number().min(1, "Subject is required."),
-  teacherId: z.coerce.number().min(1, "Teacher is required."),
-  gradeLevelId: z.coerce.number().optional().nullable(),
-  locationId: z.coerce.number().optional().nullable(),
-  isRecurring: z.boolean().default(false),
+  academicTermId: z.number().min(1, "Academic Term is required."),
+  subjectId: z.number().min(1, "Subject is required."),
+  teacherId: z.number().min(1, "Teacher is required."),
+  gradeLevelId: z.number().optional().nullable(),
+  locationId: z.number().optional().nullable(),
+  isRecurring: z.boolean(), // Remove .default(false) and make it required
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)."),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)."),
   rrule: z.string().optional().nullable(),
@@ -44,3 +44,34 @@ export type ClassFormInput = z.infer<typeof ClassFormSchema>;
 // This type can be used for the payload sent to the server action,
 // allowing for any transformations if needed.
 export type UpsertClassPayload = ClassFormInput;
+
+// Add this type definition
+export type Prerequisites = {
+  academicTerms: Array<{
+    id: number;
+    termName: string;
+    yearName: string;
+    startDate: string; // Change from Date to string
+  }>;
+  subjects: Array<{
+    id: number;
+    name: string;
+  }>;
+  teachers: Array<{
+    id: number;
+    firstName: string;
+    lastName: string;
+  }>;
+  gradeLevels: Array<{
+    id: number;
+    name: string;
+  }>;
+  locations: Array<{
+    id: number;
+    name: string;
+  }>;
+  departments: Array<{
+    id: number;
+    name: string;
+  }>;
+};

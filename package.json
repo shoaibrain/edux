@@ -7,15 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:generate-main": "dotenv -e .env.local -- drizzle-kit generate",
-    "db:migrate-main": "dotenv -e .env.local -- drizzle-kit migrate",
-    "db:generate-tenant": "dotenv -e .env.local -- drizzle-kit generate --config=drizzle.tenant.config.ts",
-    "db:migrate-tenant": "dotenv -e .env.local -- tsx ./scripts/migrate-tenant.ts"
+    "test:scheduler": "tsx ./scripts/test-scheduler.ts"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.19",
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/list": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
+    "@fullcalendar/rrule": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
     "@hookform/resolvers": "^5.1.1",
     "@neondatabase/serverless": "^1.0.1",
@@ -60,6 +60,7 @@
     "rrule": "^2.8.1",
     "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
+    "uuid": "^9.0.1",
     "zod": "^4.0.5"
   },
   "devDependencies": {
@@ -72,6 +73,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/rrule": "^2.1.7",
+    "@types/uuid": "^10.0.0",
     "dotenv-cli": "^8.0.0",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9",

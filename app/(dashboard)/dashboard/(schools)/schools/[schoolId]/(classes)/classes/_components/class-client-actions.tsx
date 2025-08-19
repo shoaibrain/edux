@@ -32,8 +32,14 @@ export function ClassClientActions({ schoolId, initialPrerequisites }: ClassClie
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
         schoolId={schoolId}
-        prerequisites={prerequisites}
-        onDataRefresh={handleDataRefresh}
+        academicTerms={prerequisites.academicTerms.map(term => ({ 
+          id: term.id, 
+          name: `${term.termName} (${term.yearName})` 
+        }))}
+        subjects={prerequisites.subjects}
+        teachers={prerequisites.teachers}
+        gradeLevels={prerequisites.gradeLevels}
+        locations={prerequisites.locations}
       />
     </>
   );

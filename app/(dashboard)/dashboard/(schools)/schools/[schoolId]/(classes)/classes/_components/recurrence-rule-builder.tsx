@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RRule, RRuleSet, rrulestr, Weekday } from 'rrule';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,11 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
   const [interval, setInterval] = useState(1);
   const [byweekday, setByweekday] = useState<number[]>([]);
   const [until, setUntil] = useState<Date | undefined>();
+
+  // Memoize the onChange callback to prevent infinite loops
+  const memoizedOnChange = useCallback((rruleString: string) => {
+    onChange(rruleString);
+  }, [onChange]);
 
   useEffect(() => {
     if (initialValue) {
@@ -73,19 +78,37 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
       }
 
       const rule = new RRule(options);
-      onChange(rule.toString());
+      memoizedOnChange(rule.toString());
     } catch (e) {
       console.error("Error generating RRULE string", e);
     }
-  }, [freq, interval, byweekday, until, startDate, onChange]);
+  }, [freq, interval, byweekday, until, startDate, memoizedOnChange]);
+
+  const handleFreqChange = useCallback((value: string) => {
+    setFreq(Number(value));
+  }, []);
+
+  const handleIntervalChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInterval(Math.max(1, Number(e.target.value)));
+  }, []);
+
+  const handleWeekdayChange = useCallback((value: string[]) => {
+    setByweekday(value.map(Number).sort());
+  }, []);
+
+  const handleUntilChange = useCallback((date: Date | undefined) => {
+    setUntil(date);
+  }, []);
 
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div className="space-y-1">
           <Label>Repeats</Label>
-          <Select onValueChange={(v) => setFreq(Number(v))} value={String(freq)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+          <Select onValueChange={handleFreqChange} value={String(freq)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value={String(RRule.DAILY)}>Daily</SelectItem>
               <SelectItem value={String(RRule.WEEKLY)}>Weekly</SelectItem>
@@ -94,24 +117,34 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
         </div>
         <div className="space-y-1">
           <Label>Repeat every</Label>
-          <Input type="number" value={interval} onChange={(e) => setInterval(Math.max(1, Number(e.target.value)))} min={1} />
+          <Input 
+            type="number" 
+            value={interval} 
+            onChange={handleIntervalChange} 
+            min={1} 
+          />
         </div>
         <div className="space-y-1">
-            <Label>Ends on (optional)</Label>
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn("w-full justify-start text-left font-normal", !until && "text-muted-foreground")}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {until ? format(until, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={until} onSelect={setUntil} initialFocus />
-                </PopoverContent>
-            </Popover>
+          <Label>Ends on (optional)</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn("w-full justify-start text-left font-normal", !until && "text-muted-foreground")}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {until ? format(until, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar 
+                mode="single" 
+                selected={until} 
+                onSelect={handleUntilChange} 
+                initialFocus 
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       {freq === RRule.WEEKLY && (
@@ -122,19 +155,19 @@ export function RecurrenceRuleBuilder({ onChange, startDate, initialValue }: Rec
             variant="outline"
             size="sm"
             value={byweekday.map(String)}
-            onValueChange={(value) => setByweekday(value.map(Number).sort())}
+            onValueChange={handleWeekdayChange}
             className="flex flex-wrap justify-start gap-1"
           >
-            <ToggleGroupItem value={String(RRule.MO.weekday)}>Mon</ToggleGroupItem>
-            <ToggleGroupItem value={String(RRule.TU.weekday)}>Tue</ToggleGroupItem>
-            <ToggleGroupItem value={String(RRule.WE.weekday)}>Wed</ToggleGroupItem>
-            <ToggleGroupItem value={String(RRule.TH.weekday)}>Thu</ToggleGroupItem>
-            <ToggleGroupItem value={String(RRule.FR.weekday)}>Fri</ToggleGroupItem>
-            <ToggleGroupItem value={String(RRule.SA.weekday)}>Sat</ToggleGroupItem>
-            <ToggleGroupItem value={String(RRule.SU.weekday)}>Sun</ToggleGroupItem>
+            <ToggleGroupItem value={String(RRule.MO)}>Mon</ToggleGroupItem>
+            <ToggleGroupItem value={String(RRule.TU)}>Tue</ToggleGroupItem>
+            <ToggleGroupItem value={String(RRule.WE)}>Wed</ToggleGroupItem>
+            <ToggleGroupItem value={String(RRule.TH)}>Thu</ToggleGroupItem>
+            <ToggleGroupItem value={String(RRule.FR)}>Fri</ToggleGroupItem>
+            <ToggleGroupItem value={String(RRule.SA)}>Sat</ToggleGroupItem>
+            <ToggleGroupItem value={String(RRule.SU)}>Sun</ToggleGroupItem>
           </ToggleGroup>
         </div>
       )}
     </div>
-  )
-  };
+  );
+}
