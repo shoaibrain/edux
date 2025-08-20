@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { SchoolFormData } from "../../../_components/types/school-forms";
 import {
   upsertSchoolBasicInfo,
-  upsertAcademicYears,
   upsertDepartments,
   upsertGradeLevels,
 } from "@/lib/actions/schools";
@@ -13,9 +12,11 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BasicInformationForm } from "../../../_components/forms/basic-information-form";
-import { AcademicInformationForm } from "../../../_components/forms/academic-information-form";
+import { AcademicYearManager } from "./academic-year-manager";
 import { DepartmentsForm } from "../../../_components/forms/departments-form";
 import { GradeLevelsForm } from "../../../_components/forms/grade-levels-form";
+import { AcademicYear } from "@/lib/types/academic";
+import { useTenant } from "@/components/tenant-provider";
 
 interface SchoolSettingsFormProps {
   initialSchoolData: SchoolFormData;
@@ -24,29 +25,33 @@ interface SchoolSettingsFormProps {
 export function SchoolSettingsForm({ initialSchoolData }: SchoolSettingsFormProps) {
   const [school, setSchool] = useState<SchoolFormData>(initialSchoolData);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const { tenant } = useTenant();
 
   const updateData = (updates: Partial<SchoolFormData>) => {
     setSchool((prev) => ({ ...prev, ...updates }));
     setErrors({});
   };
 
-  const handleSave = async (section: 'basic' | 'academics' | 'departments' | 'grades') => {
+  const handleAcademicYearCreate = (academicYear: AcademicYear) => {
+    setAcademicYears(prev => [...prev, academicYear]);
+    toast.success(`Academic year ${academicYear.yearName} created successfully`);
+  };
+
+  const handleSave = async (section: 'basic' | 'departments' | 'grades') => {
     if (!school?.id) return;
 
     let result;
     switch (section) {
       case 'basic':
         const basicInfoData = {
-            id: school.id,
-            name: school.name,
-            email: school.email,
-            address: school.address,
-            phone: school.phone,
+          id: school.id,
+          name: school.name,
+          email: school.email,
+          address: school.address,
+          phone: school.phone,
         };
         result = await upsertSchoolBasicInfo(basicInfoData);
-        break;
-      case 'academics':
-        result = await upsertAcademicYears(school.id, school.academicYears);
         break;
       case 'departments':
         result = await upsertDepartments(school.id, school.departments);
@@ -85,15 +90,15 @@ export function SchoolSettingsForm({ initialSchoolData }: SchoolSettingsFormProp
 
       <Card>
         <CardHeader>
-          <CardTitle>Academic Information</CardTitle>
-          <CardDescription>Define academic years and terms.</CardDescription>
+          <CardTitle>School Academic Years</CardTitle>
         </CardHeader>
         <CardContent>
-          <AcademicInformationForm data={school} updateData={updateData} errors={errors} />
+          <AcademicYearManager
+            schoolId={school.id?.toString() || ''}
+            tenantId={tenant?.id || ''}
+            onAcademicYearCreate={handleAcademicYearCreate}
+          />
         </CardContent>
-        <div className="flex justify-end p-6">
-          <Button onClick={() => handleSave('academics')}>Save Academic Information</Button>
-        </div>
       </Card>
 
       <Separator />

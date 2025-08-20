@@ -17,7 +17,7 @@ async function testCompleteSchedulerService() {
       description: 'Introduction to Algebra',
       startTime: new Date('2024-01-15T09:00:00-05:00'), // 9 AM EST
       endTime: new Date('2024-01-15T10:00:00-05:00'),   // 10 AM EST
-      eventType: 'class_period',
+      eventType: 'CLASS_PERIOD',
       timezone: 'America/New_York',
       maxAttendees: 25,
       requiresRegistration: false,
@@ -46,7 +46,7 @@ async function testCompleteSchedulerService() {
       description: 'Introduction to Algebra - Weekly Sessions',
       startTime: new Date('2024-01-15T11:00:00-08:00'), // 11 AM PST
       endTime: new Date('2024-01-15T12:00:00-08:00'),   // 12 PM PST
-      eventType: 'class_period',
+      eventType: 'CLASS_PERIOD',
       timezone: 'America/Los_Angeles',
       maxAttendees: 25,
       requiresRegistration: false,
@@ -102,7 +102,7 @@ async function testCompleteSchedulerService() {
         description: 'This should conflict with existing class',
         startTime: new Date('2024-01-15T09:30:00-05:00'), // Overlaps with first class
         endTime: new Date('2024-01-15T10:30:00-05:00'),
-        eventType: 'class_period',
+        eventType: 'CLASS_PERIOD',
         timezone: 'America/New_York',
         maxAttendees: 20,
         requiresRegistration: false,
@@ -130,7 +130,7 @@ async function testCompleteSchedulerService() {
       description: 'Weekly staff coordination meeting',
       startTime: new Date('2024-01-16T14:00:00-05:00'),
       endTime: new Date('2024-01-16T15:00:00-05:00'),
-      eventType: 'meeting',
+      eventType: 'MEETING',
       timezone: 'America/New_York',
       maxAttendees: 20,
       requiresRegistration: true,
@@ -159,7 +159,7 @@ async function testCompleteSchedulerService() {
       description: 'Chemistry lab practical',
       startTime: new Date('2024-01-17T10:00:00-05:00'),
       endTime: new Date('2024-01-17T12:00:00-05:00'),
-      eventType: 'class_period',
+      eventType: 'CLASS_PERIOD',
       timezone: 'America/New_York',
       maxAttendees: 25,
       requiresRegistration: false,
@@ -188,7 +188,7 @@ async function testCompleteSchedulerService() {
       description: 'Bi-weekly advanced mathematics tutoring sessions',
       startTime: new Date('2024-01-18T15:00:00-05:00'),
       endTime: new Date('2024-01-18T16:30:00-05:00'),
-      eventType: 'class_period',
+      eventType: 'CLASS_PERIOD',
       timezone: 'America/New_York',
       maxAttendees: 15,
       requiresRegistration: true,
@@ -229,7 +229,7 @@ async function testCompleteSchedulerService() {
         description: 'This should trigger a business hours warning',
         startTime: new Date('2024-01-15T20:00:00-05:00'), // 8 PM EST
         endTime: new Date('2024-01-15T21:00:00-05:00'),   // 9 PM EST
-        eventType: 'class_period',
+        eventType: 'CLASS_PERIOD',
         timezone: 'America/New_York',
         maxAttendees: 15,
         requiresRegistration: false,

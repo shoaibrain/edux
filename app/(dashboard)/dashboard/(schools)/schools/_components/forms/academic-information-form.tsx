@@ -19,14 +19,27 @@ interface AcademicInformationFormProps {
 export function AcademicInformationForm({ data, updateData, errors }: AcademicInformationFormProps) {
   const [expandedYear, setExpandedYear] = useState<string | null>(null)
 
+  // ✅ Helper function to convert Date to string for input value
+  const dateToString = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  // ✅ Helper function to convert string to Date
+  const stringToDate = (dateString: string): Date => {
+    return new Date(dateString);
+  };
+
   const addAcademicYear = () => {
     const newYear: AcademicYear = {
       id: Date.now().toString(),
       yearName: "",
-      startDate: "",
-      endDate: "",
+      startDate: new Date(), // ✅ Use Date object
+      endDate: new Date(),   // ✅ Use Date object
       isCurrent: false,
+      schoolId: data.id.toString(),
       terms: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
     updateData({ academicYears: [...data.academicYears, newYear] })
   }
@@ -45,9 +58,14 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
     const newTerm: AcademicTerm = {
       id: Date.now().toString(),
       termName: "",
-      startDate: "",
-      endDate: "",
-      isCurrent: false,
+      startDate: new Date(), // ✅ Use Date object
+      endDate: new Date(),   // ✅ Use Date object
+      academicYearId: yearId,
+      gradeLevels: [],       // ✅ Add missing field
+      isActive: true,        // ✅ Add missing field
+      isCurrent: false,      // ✅ Add missing field
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
     const updatedYears = data.academicYears.map((year) =>
       year.id === yearId ? { ...year, terms: [...year.terms, newTerm] } : year,
@@ -160,8 +178,8 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
                   <Input
                     id={`start-date-${year.id}`}
                     type="date"
-                    value={year.startDate}
-                    onChange={(e) => updateAcademicYear(year.id!, { startDate: e.target.value })}
+                    value={dateToString(year.startDate)} // ✅ Convert Date to string
+                    onChange={(e) => updateAcademicYear(year.id!, { startDate: stringToDate(e.target.value) })} // ✅ Convert string to Date
                     className={`mt-1 h-9 ${errors[`academicYears[${yearIndex}].startDate`] ? "border-red-500" : ""}`}
                   />
                   {errors[`academicYears[${yearIndex}].startDate`] && <p className="mt-1 text-xs text-red-600">{errors[`academicYears[${yearIndex}].startDate`]?.[0]}</p>}
@@ -173,8 +191,8 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
                   <Input
                     id={`end-date-${year.id}`}
                     type="date"
-                    value={year.endDate}
-                    onChange={(e) => updateAcademicYear(year.id!, { endDate: e.target.value })}
+                    value={dateToString(year.endDate)} // ✅ Convert Date to string
+                    onChange={(e) => updateAcademicYear(year.id!, { endDate: stringToDate(e.target.value) })} // ✅ Convert string to Date
                     className={`mt-1 h-9 ${errors[`academicYears[${yearIndex}].endDate`] ? "border-red-500" : ""}`}
                   />
                   {errors[`academicYears[${yearIndex}].endDate`] && <p className="mt-1 text-xs text-red-600">{errors[`academicYears[${yearIndex}].endDate`]?.[0]}</p>}
@@ -217,7 +235,7 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
                     <div className="space-y-2">
                       {year.terms.map((term, termIndex) => (
                         <div key={term.id} className="p-3 rounded border">
-                          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                          <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
                             <div>
                               <Label htmlFor={`term-name-${term.id}`} className="text-xs text-gray-600">
                                 Term Name
@@ -238,8 +256,8 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
                               <Input
                                 id={`term-start-${term.id}`}
                                 type="date"
-                                value={term.startDate}
-                                onChange={(e) => updateTerm(year.id!, term.id!, { startDate: e.target.value })}
+                                value={dateToString(term.startDate)} // ✅ Convert Date to string
+                                onChange={(e) => updateTerm(year.id!, term.id!, { startDate: stringToDate(e.target.value) })} // ✅ Convert string to Date
                                 className={`mt-1 h-8 text-sm ${errors[`academicYears[${yearIndex}].terms[${termIndex}].startDate`] ? "border-red-500" : ""}`}
                               />
                               {errors[`academicYears[${yearIndex}].terms[${termIndex}].startDate`] && <p className="mt-1 text-xs text-red-600">{errors[`academicYears[${yearIndex}].terms[${termIndex}].startDate`]?.[0]}</p>}
@@ -251,11 +269,21 @@ export function AcademicInformationForm({ data, updateData, errors }: AcademicIn
                               <Input
                                 id={`term-end-${term.id}`}
                                 type="date"
-                                value={term.endDate}
-                                onChange={(e) => updateTerm(year.id!, term.id!, { endDate: e.target.value })}
+                                value={dateToString(term.endDate)} // ✅ Convert Date to string
+                                onChange={(e) => updateTerm(year.id!, term.id!, { endDate: stringToDate(e.target.value) })} // ✅ Convert string to Date
                                 className={`mt-1 h-8 text-sm ${errors[`academicYears[${yearIndex}].terms[${termIndex}].endDate`] ? "border-red-500" : ""}`}
                               />
                               {errors[`academicYears[${yearIndex}].terms[${termIndex}].endDate`] && <p className="mt-1 text-xs text-red-600">{errors[`academicYears[${yearIndex}].terms[${termIndex}].endDate`]?.[0]}</p>}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id={`active-term-${term.id}`}
+                                checked={term.isActive}
+                                onCheckedChange={(checked) => updateTerm(year.id!, term.id!, { isActive: checked })}
+                              />
+                              <Label htmlFor={`active-term-${term.id}`} className="text-xs text-gray-600">
+                                Active
+                              </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Switch

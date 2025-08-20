@@ -1,11 +1,11 @@
 {
-  "id": "88a57077-1fef-482f-8736-411f1c2e112d",
+  "id": "6923cfc4-79c6-4ec8-befd-d0068987f8a2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.academic_terms": {
-      "name": "academic_terms",
+    "public.academic_constraints": {
+      "name": "academic_constraints",
       "schema": "",
       "columns": {
         "id": {
@@ -14,10 +14,118 @@
           "primaryKey": true,
           "notNull": true
         },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "constraint_type": {
+          "name": "constraint_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
         "academic_year_id": {
           "name": "academic_year_id",
           "type": "integer",
           "primaryKey": false,
+          "notNull": true
+        },
+        "term_id": {
+          "name": "term_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grade_levels": {
+          "name": "grade_levels",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "academic_constraints_academic_year_id_academic_years_id_fk": {
+          "name": "academic_constraints_academic_year_id_academic_years_id_fk",
+          "tableFrom": "academic_constraints",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "academic_constraints_term_id_academic_terms_id_fk": {
+          "name": "academic_constraints_term_id_academic_terms_id_fk",
+          "tableFrom": "academic_constraints",
+          "tableTo": "academic_terms",
+          "columnsFrom": [
+            "term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.academic_terms": {
+      "name": "academic_terms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
           "notNull": true
         },
         "term_name": {
@@ -38,23 +146,35 @@
           "primaryKey": false,
           "notNull": true
         },
-        "is_current": {
-          "name": "is_current",
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grade_levels": {
+          "name": "grade_levels",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true,
-          "default": false
+          "notNull": false,
+          "default": true
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -114,12 +234,6 @@
           "primaryKey": true,
           "notNull": true
         },
-        "school_id": {
-          "name": "school_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
         "year_name": {
           "name": "year_name",
           "type": "text",
@@ -142,19 +256,25 @@
           "name": "is_current",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": false
+        },
+        "school_id": {
+          "name": "school_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -680,14 +800,14 @@
           "type": "attendee_role",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "status": {
           "name": "status",
-          "type": "attendance_status",
+          "type": "event_attendance_status",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "registered_at": {
           "name": "registered_at",
@@ -784,7 +904,7 @@
           "type": "instance_status",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "notes": {
           "name": "notes",
@@ -850,7 +970,7 @@
           "type": "resource_type",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "resource_id": {
           "name": "resource_id",
@@ -1013,6 +1133,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "term_id": {
+          "name": "term_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_by": {
           "name": "created_by",
           "type": "integer",
@@ -1055,6 +1187,32 @@
           "tableTo": "recurrence_rules",
           "columnsFrom": [
             "recurrence_rule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "events_academic_year_id_academic_years_id_fk": {
+          "name": "events_academic_year_id_academic_years_id_fk",
+          "tableFrom": "events",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "events_term_id_academic_terms_id_fk": {
+          "name": "events_term_id_academic_terms_id_fk",
+          "tableFrom": "events",
+          "tableTo": "academic_terms",
+          "columnsFrom": [
+            "term_id"
           ],
           "columnsTo": [
             "id"
@@ -2264,16 +2422,6 @@
     }
   },
   "enums": {
-    "public.attendance_status": {
-      "name": "attendance_status",
-      "schema": "public",
-      "values": [
-        "invited",
-        "confirmed",
-        "declined",
-        "tentative"
-      ]
-    },
     "public.attendee_role": {
       "name": "attendee_role",
       "schema": "public",
@@ -2282,6 +2430,16 @@
         "attendee",
         "optional",
         "required"
+      ]
+    },
+    "public.event_attendance_status": {
+      "name": "event_attendance_status",
+      "schema": "public",
+      "values": [
+        "invited",
+        "confirmed",
+        "declined",
+        "tentative"
       ]
     },
     "public.event_status": {

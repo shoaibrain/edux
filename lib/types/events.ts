@@ -1,4 +1,13 @@
-export type EventType = 'class_period' | 'school_event' | 'meeting' | 'exam' | 'holiday' | 'field_trip' | 'parent_conference';
+export type EventType = 
+  | 'CLASS_PERIOD' 
+  | 'SCHOOL_EVENT' 
+  | 'MEETING' 
+  | 'EXAM' 
+  | 'HOLIDAY'
+  | 'ACADEMIC_YEAR'
+  | 'ACADEMIC_TERM'
+  | 'EXAM_PERIOD'
+  | 'BREAK_PERIOD';
 export type EventStatus = 'scheduled' | 'cancelled' | 'completed' | 'postponed';
 export type AttendeeRole = 'organizer' | 'attendee' | 'optional' | 'required';
 export type AttendanceStatus = 'invited' | 'confirmed' | 'declined' | 'tentative';
@@ -73,4 +82,26 @@ export interface EventResource {
   resourceName: string;
   quantity: number;
   notes?: string;
+}
+
+// Add proper interfaces for academic events
+export interface AcademicYearEvent extends BaseEvent {
+  eventType: 'ACADEMIC_YEAR';
+  metadata: {
+    academicYearId: string;
+    yearName: string;
+    isCurrent: boolean;
+    type: 'ACADEMIC_YEAR';
+  };
+}
+
+export interface AcademicTermEvent extends BaseEvent {
+  eventType: 'ACADEMIC_TERM';
+  metadata: {
+    termId: string;
+    termName: string;
+    academicYearId: string;
+    gradeLevels: string[];
+    type: 'ACADEMIC_TERM';
+  };
 }

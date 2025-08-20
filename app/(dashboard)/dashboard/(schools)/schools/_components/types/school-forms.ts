@@ -1,28 +1,36 @@
 export interface AcademicTerm {
-  id?: string;
+  id: string;
   termName: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
+  academicYearId: string;
+  gradeLevels: string[];
+  isActive: boolean;
   isCurrent: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AcademicYear {
-  id?: string;
+  id: string;
   yearName: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   isCurrent: boolean;
+  schoolId: string;
   terms: AcademicTerm[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Department {
-  id?: string;
+  id: string;
   name: string;
   description?: string;
 }
 
 export interface GradeLevel {
-  id?: string;
+  id: string;
   name: string;
   levelOrder: number;
   description?: string;
@@ -58,16 +66,29 @@ export interface BrandingConfig {
   };
 }
 
+// Remove academic year/term types since they're now managed separately
 export interface SchoolFormData {
-  id?: number;
-  name: string;
-  address?: string | null;
-  phone?: string | null;
-  email: string;
-  academicYears: AcademicYear[];
-  departments: Department[];
-  gradeLevels: GradeLevel[];
-  website?: string | null;
-  logoUrl?: string | null;
-  branding?: BrandingConfig;
+    id: number;
+    name: string;
+    email: string;
+    address: string;
+    phone: string;
+    departments: Department[];
+    gradeLevels: GradeLevel[];
+    academicYears: AcademicYear[];
+    branding?: BrandingConfig;
+    // Remove academicYears field
+}
+
+export interface Department {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+export interface GradeLevel {
+    id: string;
+    name: string;
+    levelOrder: number;
+    description?: string;
 }

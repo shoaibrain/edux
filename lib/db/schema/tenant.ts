@@ -77,29 +77,45 @@ export const schools = pgTable('schools', {
 
 export const academicYears = pgTable('academic_years', {
     id: serial('id').primaryKey(),
-    schoolId: integer('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
     yearName: text('year_name').notNull(),
     startDate: date('start_date').notNull(),
     endDate: date('end_date').notNull(),
-    isCurrent: boolean('is_current').default(false).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    isCurrent: boolean('is_current').default(false),
+    schoolId: integer('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
     unqSchoolYear: uniqueIndex('unq_school_year').on(t.schoolId, t.yearName),
 }));
 
 export const academicTerms = pgTable('academic_terms', {
     id: serial('id').primaryKey(),
-    academicYearId: integer('academic_year_id').notNull().references(() => academicYears.id, { onDelete: 'cascade' }),
     termName: text('term_name').notNull(),
     startDate: date('start_date').notNull(),
     endDate: date('end_date').notNull(),
-    isCurrent: boolean('is_current').default(false).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    academicYearId: integer('academic_year_id').notNull().references(() => academicYears.id, { onDelete: 'cascade' }),
+    gradeLevels: text('grade_levels').array(),
+    isActive: boolean('is_active').default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
     unqYearTerm: uniqueIndex('unq_year_term').on(t.academicYearId, t.termName),
 }));
+
+export const academicConstraints = pgTable('academic_constraints', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  constraintType: text('constraint_type', { enum: ['NO_CLASSES', 'EXAM_ONLY', 'BREAK_PERIOD', 'CUSTOM'] }).notNull(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  academicYearId: integer('academic_year_id').notNull().references(() => academicYears.id, { onDelete: 'cascade' }),
+  termId: integer('term_id').references(() => academicTerms.id, { onDelete: 'cascade' }),
+  gradeLevels: text('grade_levels').array(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const departments = pgTable('departments', {
     id: serial('id').primaryKey(),
@@ -303,6 +319,7 @@ export const academicYearsRelations = relations(academicYears, ({ one, many }) =
         references: [schools.id],
     }),
     academicTerms: many(academicTerms),
+    constraints: many(academicConstraints),
 }));
 
 export const academicTermsRelations = relations(academicTerms, ({ one, many }) => ({
@@ -311,6 +328,17 @@ export const academicTermsRelations = relations(academicTerms, ({ one, many }) =
         references: [academicYears.id],
     }),
     classPeriods: many(classPeriods), // New
+}));
+
+export const academicConstraintsRelations = relations(academicConstraints, ({ one, many }) => ({
+    academicYear: one(academicYears, {
+        fields: [academicConstraints.academicYearId],
+        references: [academicYears.id],
+    }),
+    term: one(academicTerms, {
+        fields: [academicConstraints.termId],
+        references: [academicTerms.id],
+    }),
 }));
 
 
@@ -442,6 +470,8 @@ export const events = pgTable('events', {
   maxAttendees: integer('max_attendees'),
   requiresRegistration: boolean('requires_registration').default(false).notNull(),
   metadata: jsonb('metadata'),
+  academicYearId: integer('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
+  termId: integer('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
   createdBy: integer('created_by').notNull().references(() => people.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -509,6 +539,8 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   school: one(schools, { fields: [events.schoolId], references: [schools.id] }),
   recurrenceRule: one(recurrenceRules, { fields: [events.recurrenceRuleId], references: [recurrenceRules.id] }),
   parentEvent: one(events, { fields: [events.parentEventId], references: [events.id] }),
+  academicYear: one(academicYears, { fields: [events.academicYearId], references: [academicYears.id] }),
+  term: one(academicTerms, { fields: [events.termId], references: [academicTerms.id] }),
   createdByPerson: one(people, { fields: [events.createdBy], references: [people.id] }),
   instances: many(eventInstances),
   attendees: many(eventAttendees),

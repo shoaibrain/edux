@@ -1,5 +1,5 @@
-CREATE TYPE "public"."attendance_status" AS ENUM('invited', 'confirmed', 'declined', 'tentative');--> statement-breakpoint
 CREATE TYPE "public"."attendee_role" AS ENUM('organizer', 'attendee', 'optional', 'required');--> statement-breakpoint
+CREATE TYPE "public"."event_attendance_status" AS ENUM('invited', 'confirmed', 'declined', 'tentative');--> statement-breakpoint
 CREATE TYPE "public"."event_status" AS ENUM('scheduled', 'cancelled', 'completed', 'postponed');--> statement-breakpoint
 CREATE TYPE "public"."event_type" AS ENUM('class_period', 'school_event', 'meeting', 'exam', 'holiday', 'field_trip', 'parent_conference');--> statement-breakpoint
 CREATE TYPE "public"."instance_status" AS ENUM('scheduled', 'cancelled', 'completed', 'postponed');--> statement-breakpoint
@@ -9,26 +9,42 @@ CREATE TYPE "public"."person_type" AS ENUM('student', 'guardian', 'staff');--> s
 CREATE TYPE "public"."recurrence_frequency" AS ENUM('daily', 'weekly', 'monthly', 'yearly');--> statement-breakpoint
 CREATE TYPE "public"."resource_type" AS ENUM('room', 'equipment', 'vehicle', 'other');--> statement-breakpoint
 CREATE TYPE "public"."schedule_type" AS ENUM('recurring_class', 'one_time_event');--> statement-breakpoint
+CREATE TABLE "academic_constraints" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"constraint_type" text NOT NULL,
+	"start_date" date NOT NULL,
+	"end_date" date NOT NULL,
+	"academic_year_id" integer NOT NULL,
+	"term_id" integer,
+	"grade_levels" text[],
+	"metadata" jsonb,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "academic_terms" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"academic_year_id" integer NOT NULL,
 	"term_name" text NOT NULL,
 	"start_date" date NOT NULL,
 	"end_date" date NOT NULL,
-	"is_current" boolean DEFAULT false NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"academic_year_id" integer NOT NULL,
+	"grade_levels" text[],
+	"is_active" boolean DEFAULT true,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "academic_years" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"school_id" integer NOT NULL,
 	"year_name" text NOT NULL,
 	"start_date" date NOT NULL,
 	"end_date" date NOT NULL,
-	"is_current" boolean DEFAULT false NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"is_current" boolean DEFAULT false,
+	"school_id" integer NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "class_period_enrollments" (
@@ -83,8 +99,8 @@ CREATE TABLE "event_attendees" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"event_id" integer NOT NULL,
 	"person_id" integer NOT NULL,
-	"role" "attendee_role",
-	"status" "attendance_status",
+	"role" "attendee_role" NOT NULL,
+	"status" "event_attendance_status" NOT NULL,
 	"registered_at" timestamp with time zone,
 	"notes" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -96,7 +112,7 @@ CREATE TABLE "event_instances" (
 	"event_id" integer NOT NULL,
 	"start_time" timestamp with time zone NOT NULL,
 	"end_time" timestamp with time zone NOT NULL,
-	"status" "instance_status",
+	"status" "instance_status" NOT NULL,
 	"notes" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -105,7 +121,7 @@ CREATE TABLE "event_instances" (
 CREATE TABLE "event_resources" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"event_id" integer NOT NULL,
-	"resource_type" "resource_type",
+	"resource_type" "resource_type" NOT NULL,
 	"resource_id" integer,
 	"resource_name" text NOT NULL,
 	"quantity" integer DEFAULT 1 NOT NULL,
@@ -130,6 +146,8 @@ CREATE TABLE "events" (
 	"max_attendees" integer,
 	"requires_registration" boolean DEFAULT false NOT NULL,
 	"metadata" jsonb,
+	"academic_year_id" integer,
+	"term_id" integer,
 	"created_by" integer NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -283,6 +301,8 @@ CREATE TABLE "users_to_roles" (
 	CONSTRAINT "users_to_roles_user_id_role_id_pk" PRIMARY KEY("user_id","role_id")
 );
 --> statement-breakpoint
+ALTER TABLE "academic_constraints" ADD CONSTRAINT "academic_constraints_academic_year_id_academic_years_id_fk" FOREIGN KEY ("academic_year_id") REFERENCES "public"."academic_years"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "academic_constraints" ADD CONSTRAINT "academic_constraints_term_id_academic_terms_id_fk" FOREIGN KEY ("term_id") REFERENCES "public"."academic_terms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "academic_terms" ADD CONSTRAINT "academic_terms_academic_year_id_academic_years_id_fk" FOREIGN KEY ("academic_year_id") REFERENCES "public"."academic_years"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "academic_years" ADD CONSTRAINT "academic_years_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "class_period_enrollments" ADD CONSTRAINT "class_period_enrollments_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -302,6 +322,8 @@ ALTER TABLE "event_instances" ADD CONSTRAINT "event_instances_event_id_events_id
 ALTER TABLE "event_resources" ADD CONSTRAINT "event_resources_event_id_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "events" ADD CONSTRAINT "events_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "events" ADD CONSTRAINT "events_recurrence_rule_id_recurrence_rules_id_fk" FOREIGN KEY ("recurrence_rule_id") REFERENCES "public"."recurrence_rules"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_academic_year_id_academic_years_id_fk" FOREIGN KEY ("academic_year_id") REFERENCES "public"."academic_years"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_term_id_academic_terms_id_fk" FOREIGN KEY ("term_id") REFERENCES "public"."academic_terms"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "events" ADD CONSTRAINT "events_created_by_people_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "grade_levels" ADD CONSTRAINT "grade_levels_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guardians" ADD CONSTRAINT "guardians_person_id_people_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

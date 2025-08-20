@@ -1,5 +1,5 @@
 
-import { RRule, Weekday } from 'rrule';
+import { RRule } from 'rrule';
 import { RecurrenceRule } from '../../../types/events';
 
 export class RecurrenceModel {

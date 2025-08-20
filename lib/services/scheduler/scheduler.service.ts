@@ -41,7 +41,7 @@ export interface CreateEventOptions {
 }
 
 export interface ScheduleConflict {
-  type: 'TIME_OVERLAP' | 'RESOURCE_CONFLICT' | 'CONSTRAINT_VIOLATION' | 'ATTENDEE_CONFLICT';
+  type: 'TIME_OVERLAP' | 'RESOURCE_CONFLICT' | 'CONSTRAINT_VIOLATION' | 'ATTENDEE_CONFLICT' | 'DURATION_LIMIT';
   message: string;
   conflictingEventId?: string;
   severity: 'WARNING' | 'ERROR';
@@ -311,26 +311,29 @@ export class SchedulerService {
     const conflicts: ScheduleConflict[] = [];
 
     try {
-      // Check time overlap with existing events
-      const overlappingEvents = Array.from(this.events.values()).filter(event => 
-        event.tenantId === options.tenantId &&
-        event.status === 'scheduled' &&
-        this.hasTimeOverlap(
-          options.startTime,
-          options.endTime,
-          event.startTime,
-          event.endTime
-        )
-      );
+      // ✅ CRITICAL: Skip time overlap check for ALL academic events
+      if (!this.isAcademicEvent(options.eventType)) {
+        // Check time overlap with existing events (only for non-academic events)
+        const overlappingEvents = Array.from(this.events.values()).filter(event => 
+          event.tenantId === options.tenantId &&
+          event.status === 'scheduled' &&
+          this.hasTimeOverlap(
+            options.startTime,
+            options.endTime,
+            event.startTime,
+            event.endTime
+          )
+        );
 
-      if (overlappingEvents.length > 0) {
-        conflicts.push({
-          type: 'TIME_OVERLAP',
-          message: `Event overlaps with ${overlappingEvents.length} existing event(s)`,
-          conflictingEventId: overlappingEvents[0].id,
-          severity: 'ERROR',
-          details: { overlappingEventIds: overlappingEvents.map(e => e.id) }
-        });
+        if (overlappingEvents.length > 0) {
+          conflicts.push({
+            type: 'TIME_OVERLAP',
+            message: `Event overlaps with ${overlappingEvents.length} existing event(s)`,
+            conflictingEventId: overlappingEvents[0].id,
+            severity: 'ERROR',
+            details: { overlappingEventIds: overlappingEvents.map(e => e.id) }
+          });
+        }
       }
 
       // Check resource conflicts
@@ -345,7 +348,12 @@ export class SchedulerService {
         conflicts.push(...attendeeConflicts);
       }
 
-      // Check business hours constraint
+      // ✅ CRITICAL: Skip business rules for academic events
+      if (this.isAcademicEvent(options.eventType)) {
+        return conflicts; // Return early - no business rule validation needed
+      }
+
+      // Check business hours constraint (only for regular events)
       const startHour = options.startTime.getHours();
       const endHour = options.endTime.getHours();
       if (startHour < 8 || endHour > 18) {
@@ -356,11 +364,11 @@ export class SchedulerService {
         });
       }
 
-      // Check event duration constraint
+      // Check event duration constraint (only for regular events)
       const durationHours = (options.endTime.getTime() - options.startTime.getTime()) / (1000 * 60 * 60);
       if (durationHours > 8) {
         conflicts.push({
-          type: 'CONSTRAINT_VIOLATION',
+          type: 'DURATION_LIMIT', // ✅ Use the new type you added
           message: 'Event duration cannot exceed 8 hours',
           severity: 'ERROR',
         });
@@ -432,6 +440,77 @@ export class SchedulerService {
   }
 
   /**
+   * Validate business rules
+   */
+  private validateBusinessRules(options: CreateEventOptions): ScheduleConflict[] {
+    const conflicts: ScheduleConflict[] = [];
+    
+    // ✅ CRITICAL: Skip business hours validation for academic events
+    if (options.eventType === 'ACADEMIC_YEAR' || 
+        options.eventType === 'ACADEMIC_TERM' || 
+        options.eventType === 'EXAM_PERIOD' || 
+        options.eventType === 'BREAK_PERIOD') {
+      return conflicts; // Return empty conflicts array - no validation needed
+    }
+
+    // ✅ Only apply duration limit to regular events
+    const durationMs = options.endTime.getTime() - options.startTime.getTime();
+    const durationHours = durationMs / (1000 * 60 * 60);
+
+    if (durationHours > 8) {
+      conflicts.push({
+        type: 'DURATION_LIMIT',
+        message: 'Event duration cannot exceed 8 hours',
+        severity: 'ERROR'
+      });
+    }
+
+    // ... rest of existing validation logic ...
+    
+    return conflicts;
+  }
+
+  private isAcademicEvent(eventType: EventType): boolean {
+    return ['ACADEMIC_YEAR', 'ACADEMIC_TERM', 'EXAM_PERIOD', 'BREAK_PERIOD'].includes(eventType);
+  }
+
+  private validateAcademicEventRules(options: CreateEventOptions): ScheduleConflict[] {
+    const conflicts: ScheduleConflict[] = [];
+    
+    // Academic events can span any duration - no time limits
+    // Only validate that start date is before end date
+    if (options.startTime >= options.endTime) {
+      conflicts.push({
+        type: 'CONSTRAINT_VIOLATION',
+        message: 'Start date must be before end date',
+        severity: 'ERROR'
+      });
+    }
+    
+    return conflicts;
+  }
+
+  private validateRegularEventRules(options: CreateEventOptions): ScheduleConflict[] {
+    const conflicts: ScheduleConflict[] = [];
+    
+    // Apply the 8-hour limit only to regular events
+    const durationMs = options.endTime.getTime() - options.startTime.getTime();
+    const durationHours = durationMs / (1000 * 60 * 60);
+
+    if (durationHours > 8) {
+      conflicts.push({
+        type: 'DURATION_LIMIT',
+        message: 'Event duration cannot exceed 8 hours',
+        severity: 'ERROR'
+      });
+    }
+
+    // ... other regular event validations ...
+    
+    return conflicts;
+  }
+
+  /**
    * Convert event time to a specific timezone for display
    */
   static formatEventTime(event: ScheduledEvent, targetTimezone: string): string {
@@ -458,5 +537,28 @@ export class SchedulerService {
       // Remove unused error parameter
       return `${event.startTime.toISOString()} - ${event.endTime.toISOString()}`;
     }
+  }
+
+  // ✅ Add this helper method
+  private isAcademicEventWithParent(options: CreateEventOptions): boolean {
+    // Check if this is an academic term that has a parent academic year
+    if (options.eventType === 'ACADEMIC_TERM') {
+      // Look for parent academic year in metadata
+      const parentAcademicYearId = options.metadata?.parentAcademicYearId;
+      if (parentAcademicYearId) {
+        // Check if parent exists and this term is within its time range
+        const parentEvent = Array.from(this.events.values()).find(event => 
+          event.id === parentAcademicYearId && 
+          event.eventType === 'ACADEMIC_YEAR'
+        );
+        
+        if (parentEvent) {
+          // ✅ This term is contained within its parent academic year - no overlap conflict
+          return true;
+        }
+      }
+    }
+    
+    return false;
   }
 }
