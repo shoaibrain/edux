@@ -2,8 +2,9 @@
 
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, TestTube } from 'lucide-react';
 import { ClassFormDialog } from './class-form-dialog';
+import { SchedulerTestDialog } from './scheduler-test-dialog';
 import { Prerequisites } from '@/lib/dto/class';
 import { getPrerequisitesForClassForm } from '@/lib/actions/class';
 
@@ -14,6 +15,7 @@ interface ClassClientActionsProps {
 
 export function ClassClientActions({ schoolId, initialPrerequisites }: ClassClientActionsProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isSchedulerTestOpen, setIsSchedulerTestOpen] = React.useState(false);
   const [prerequisites, setPrerequisites] = useState(initialPrerequisites);
 
   // This function will be called by the sub-dialogs to refresh the dropdown data
@@ -24,10 +26,21 @@ export function ClassClientActions({ schoolId, initialPrerequisites }: ClassClie
 
   return (
     <>
-      <Button onClick={() => setIsDialogOpen(true)}>
-        <PlusCircle className="mr-2 h-4 w-4" />
-        Create Class
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={() => setIsSchedulerTestOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <TestTube className="mr-2 h-4 w-4" />
+          Test Scheduler
+        </Button>
+        <Button onClick={() => setIsDialogOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Create Class
+        </Button>
+      </div>
+      
       <ClassFormDialog
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
@@ -40,6 +53,12 @@ export function ClassClientActions({ schoolId, initialPrerequisites }: ClassClie
         teachers={prerequisites.teachers}
         gradeLevels={prerequisites.gradeLevels}
         locations={prerequisites.locations}
+      />
+      
+      <SchedulerTestDialog
+        isOpen={isSchedulerTestOpen}
+        setIsOpen={setIsSchedulerTestOpen}
+        schoolId={schoolId}
       />
     </>
   );

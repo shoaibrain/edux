@@ -115,7 +115,7 @@ export class AcademicSchedulerService {
     const result = { isValid: true, errors: [] as string[], warnings: [] as string[] };
     
     try {
-      const academicYear = this.academicYears.get(academicYearId);
+      const academicYear = this.academicYears.get(parseInt(academicYearId));
       if (!academicYear) {
         result.errors.push('Academic year not found');
         result.isValid = false;
